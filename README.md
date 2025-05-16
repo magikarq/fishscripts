@@ -39,7 +39,6 @@ sudo ./setup.sh
 
 ## 🐧 Supported Distros
 
-* Ubuntu (experimental)
 * Arch (derivatives could work too)
 
 ---
