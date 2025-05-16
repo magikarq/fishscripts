@@ -1,4 +1,3 @@
-Here's a **starter README** for your GitHub repo, assuming you're writing setup scripts to prepare a Linux system for gaming. It includes all the essentials: title, description, features, usage, and some optional sections you can expand later.
 
 ---
 
