@@ -24,7 +24,7 @@ Scripts to quickly set up a Linux system optimized for gaming — including GPU 
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/yourusername/linux-gaming-setup.git
+git clone https://github.com/magikarq/linuxfish.git
 cd linux-gaming-setup
 ```
 
