@@ -1,51 +1,65 @@
-# linuxfish
+Here's a **starter README** for your GitHub repo, assuming you're writing setup scripts to prepare a Linux system for gaming. It includes all the essentials: title, description, features, usage, and some optional sections you can expand later.
 
-🎮 Linux Gaming Setup Scripts
+---
+
+# 🎮 Linux Gaming Setup Scripts
 
 Scripts to quickly set up a Linux system optimized for gaming — including GPU drivers, performance tweaks, game launchers, and more.
-🧰 Features
 
-    🖥️ GPU driver installation (NVIDIA / AMD)
+---
 
-    🎮 Steam, Lutris, Heroic Games Launcher setup
+## 🧰 Features
 
-    ⚙️ Performance optimizations (CPU governor, swappiness, etc.)
+* 🖥️ GPU driver installation
+* 🎮 Steam, Lutris, Heroic Games Launcher setup
+* ⚙️ Performance optimizations (CPU governor, swappiness, etc.)
+* 🕹️ Gaming Dependencies (arch-gaming-meta)
+* ⚙️ General config and tools
+* 📦 Flatpak / Chaotic AUR 
+* 🐸 TKG Kernel
 
-    🕹️ Game mode & Feral gamemode setup
+---
 
-    📦 Flatpak / Wine / Proton configuration
+## 🚀 Getting Started
 
-    🧼 Optional bloat removal and cleanup
+**1. Clone the repository**
 
-🚀 Getting Started
-
-1. Clone the repository
-
+```bash
 git clone https://github.com/yourusername/linux-gaming-setup.git
 cd linux-gaming-setup
+```
 
-2. Run the main setup script
+**2. Run the main setup script**
 
+```bash
 chmod +x setup.sh
-./setup.sh
+sudo ./setup.sh
+```
 
-    Note: Run as root or with sudo when required. Read the scripts before executing for safety.
+---
 
-🐧 Supported Distros
+## 🐧 Supported Distros
 
-    Ubuntu (experimental)
+* Ubuntu (experimental
+* Arch (derivatives could work too)
 
-    Arch
+---
 
-
-⚠️ Disclaimer
+## ⚠️ Disclaimer
 
 This project is intended for users comfortable with the Linux command line. Always read scripts before running them. Use at your own risk.
 
-📜 License
+---
 
- License. See LICENSE for details.
+## 📜 License
 
-🙌 Contributing
+GPL License. See [LICENSE](./LICENSE) for details.
+
+---
+
+## 🙌 Contributing
 
 PRs are welcome! If you have tweaks, additions, or support for more distros — feel free to open a pull request.
+
+---
+
