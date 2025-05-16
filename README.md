@@ -1,7 +1,7 @@
 
 ---
 
-# 🎮 Linux Gaming Setup Scripts
+# 🎮 Linux Gaming Setup Script
 
 Scripts to quickly set up a Linux system optimized for gaming — including GPU drivers, performance tweaks, game launchers, and more.
 
