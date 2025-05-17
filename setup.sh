@@ -93,7 +93,7 @@ while true; do
 
     if [[ "$lutris_answer" == "y" || "$lutris_answer" == "Y" ]]; then
         echo "Downloading and installing Lutris..."
-       pacman -S --noconfirm lutris
+       pacman -S --noconfirm --needed lutris
         break
     elif [[ "$lutris_answer" == "n" || "$lutris_answer" == "N" ]]; then
         echo "Lutris installation skipped."
@@ -109,7 +109,7 @@ while true; do
     read -r steam_answer
 
     if [[ "$steam_answer" == "y" || "$steam_answer" == "Y" ]]; then
-       sudo pacman -S --noconfirm steam
+       sudo pacman -S --noconfirm --needed steam
         break
     elif [[ "$steam_answer" == "n" || "$steam_answer" == "N" ]]; then
         echo "Steam installation skipped."
@@ -125,7 +125,7 @@ while true; do
     read -r heroic_answer
 
     if [[ "$heroic_answer" == "y" || "$heroic_answer" == "Y" ]]; then
-       yay --noconfirm -S heroic-games-launcher-bin
+       sudo -u "$TARGET_USER" yay -S --noconfirm --needed heroic-games-launcher-bin
         break
 
     elif [[ "$heroic_answer" == "n" || "$heroic_answer" == "N" ]]; then
@@ -144,7 +144,7 @@ while true; do
 
     if [[ "$General_answer" == "y" || "$General_answer" == "Y" ]]; then
 # Install software
-       sudo -u "$TARGET_USER" yay -S --noconfirm arch-gaming-meta
+       sudo -u "$TARGET_USER" yay -S --noconfirm --needed arch-gaming-meta
        
 #systctl.d tweaks
        sysctl -w vm.swappiness=100
@@ -218,11 +218,43 @@ while true; do
     echo "Install Wine and Winetricks? (y/n)"
     read -r wine_answer
     if [[ "$wine_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm wine-staging winetricks wine-mono
+        pacman -S --noconfirm --needed wine-staging winetricks wine-mono
         echo "Wine and Winetricks installed succesfully."
         break
     elif [[ "$wine_answer" =~ ^[Nn]$ ]]; then
         echo "wine installation skipped."
+        break
+    else
+        echo "Invalid input. Please enter 'y' or 'n'."
+    fi
+done
+
+# Installsystem monitoring tools
+while true; do
+    echo "Install system monitoring tools (fastfetch/nvtop/htop/btop? (y/n)"
+    read -r monitoring_answer
+    if [[ "$monitoring_answer" =~ ^[Yy]$ ]]; then
+        pacman -S --noconfirm --needed fastfetch nvtop htop btop
+        echo "System monitoring tools installed succesfully."
+        break
+    elif [[ "$monitoring_answer" =~ ^[Nn]$ ]]; then
+        echo "Monitoring tools installation skipped."
+        break
+    else
+        echo "Invalid input. Please enter 'y' or 'n'."
+    fi
+done
+
+# Install linutil
+while true; do
+    echo "Install linutil for extra setup options ? (y/n)"
+    read -r linutil_answer
+    if [[ "$linutil_answer" =~ ^[Yy]$ ]]; then
+        sudo -u "$TARGET_USER" yay -S --noconfirm --needed linutil-bin 
+        echo "Linutil installed succesfully."
+        break
+    elif [[ "$linutil_answer" =~ ^[Nn]$ ]]; then
+        echo "Linutil installation skipped."
         break
     else
         echo "Invalid input. Please enter 'y' or 'n'."
@@ -234,7 +266,7 @@ while true; do
     echo "Install lact (manage and/or overclock your GPU)? (y/n)"
     read -r lact_answer
     if [[ "$lact_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm lact
+        pacman -S --noconfirm --needed lact
         echo "lact installed succesfully."
         break
     elif [[ "$lact_answer" =~ ^[Nn]$ ]]; then
@@ -250,7 +282,7 @@ while true; do
     echo "Install and configure Firewall(UFW)? (y/n)"
     read -r ufw_answer
     if [[ "$ufw_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm ufw
+        pacman -S --noconfirm --needed ufw
         systemctl enable ufw
         echo "ufw installed succesfully."
         break
@@ -267,7 +299,7 @@ while true; do
     echo "Install protonplus (manage compatibility tools like PROTON)? (y/n)"
     read -r proton_answer
     if [[ "$proton_answer" =~ ^[Yy]$ ]]; then
-        sudo -u "$TARGET_USER" yay -S --noconfirm protonplus
+        sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
         echo "protonplus installed succesfully."
         break
     elif [[ "proton_answer" =~ ^[Nn]$ ]]; then
@@ -278,7 +310,7 @@ while true; do
     fi
 done
 
-# Install protonplus
+# Install TKG kernel
 while true; do
     echo "Compile TKG Kernel? (y/n)"
     read -r kernel_answer
