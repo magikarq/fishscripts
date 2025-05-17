@@ -16,6 +16,7 @@ Scripts to quickly set up a Linux system optimized for gaming — including GPU 
 * ⚙️ General config and tools
 * 📦 Flatpak / Chaotic AUR
 * ⚙️ Cachyos patches
+*  Linutil  for extra setup
 * 🐸 TKG Kernel
 
 ---
