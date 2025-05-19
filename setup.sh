@@ -17,25 +17,27 @@ chown "$TARGET_USER:$TARGET_USER" "$SETUP_DIR"
 
 # Display logo
 echo -e " $(cat << 'EOF'
-         -`                     
-                 .o+`                   
-                `ooo/                    
-               `+oooo:                   
-              `+oooooo:                  
-              -+oooooo+:                 
-            `/:-:++oooo+:                
-           `/++++/+++++++:               
-          `/++++++++++++++:              
-         `/+++ooooooooooooo/`            
-        ./ooosssso++osssssso+`           
-       .oossssso-````/ossssss+`          
-      -osssssso.      :ssssssso.         
-     :osssssss/        osssso+++.        
-    /ossssssss/        +ssssooo/-        
-  `/ossssso+/:-        -:/+osssso+-      
- `+sso+:-`                 `.-/+oso:     
-`++:.                           `-/+/    
-.`                                 `/
+
+
+                   -`
+                  .o+`
+                 `ooo/
+                `+oooo:
+               `+oooooo:
+               -+oooooo+:
+             `/:-:++oooo+:
+            `/++++/+++++++:
+           `/++++++++++++++:
+          `/+++ooooooooooooo/`
+         ./ooosssso++osssssso+`
+        .oossssso-````/ossssss+`
+       -osssssso.      :ssssssso.
+      :osssssss/        osssso+++.
+     /ossssssss/        +ssssooo/-
+   `/ossssso+/:-        -:/+osssso+-
+  `+sso+:-`                 `.-/+oso:
+ `++:.                           `-/+/
+
 EOF
 )"
 
@@ -251,7 +253,7 @@ while true; do
     read -r driver_answer
 
     if [[ "$driver_answer" == "y" || "$driver_answer" == "Y" ]]; then
-     pacman -S --noconfirm --needed nvidia-settings nvidia-utils lib32-nvidia-utils lib32-opencl-nvidia opencl-nvidia libvdpau libxnvctrl vulkan-icd-loader lib32-vulkan-icd-loader
+     pacman -S --noconfirm --needed nvidia-dkms nvidia-settings nvidia-utils lib32-nvidia-utils lib32-opencl-nvidia opencl-nvidia libvdpau libxnvctrl vulkan-icd-loader lib32-vulkan-icd-loader
     mkinitcpio -P
     echo "NVIDIA drivers installed successfully."
     break
