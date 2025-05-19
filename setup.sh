@@ -119,6 +119,22 @@ while true; do
     fi
 done
 
+# lug-helperr installation
+while true; do
+    echo "Would you like to install lug-helper (Star-citizen)? (y/n)"
+    read -r lug_answer
+
+    if [[ "$lug_answer" == "y" || "$lug_answer" == "Y" ]]; then
+        sudo -u "$TARGET_USER" yay -S --noconfirm --needed lug-helper
+        break
+    elif [[ "$lug_answer" == "n" || "$lug_answer" == "N" ]]; then
+        echo "lug-helper installation skipped."
+        break
+    else
+        echo "Invalid input. Please enter 'y' or 'n'."
+    fi
+done
+
 # Heroic Games Launcher installation
 while true; do
     echo "Would you like to install Heroic Games Launcher (Epic/GOG/PRIME support)? (y/n)"
@@ -130,6 +146,23 @@ while true; do
 
     elif [[ "$heroic_answer" == "n" || "$heroic_answer" == "N" ]]; then
         echo "Heroic Games Launcher installation skipped."
+        break
+    else
+        echo "Invalid input. Please enter 'y' or 'n'."
+    fi
+done
+
+# Install prismlauncher
+while true; do
+    echo "Install prismlauncher (Minecraft launcher for mods? (y/n)"
+    read -r prism_answer
+
+    if [[ "$prism_answer" == "y" || "$prism_answer" == "Y" ]]; then
+     pacman -S --noconfirm --needed prismlauncher
+    echo "Prismlauncher installed successfully."
+    break
+    elif [[ "$prism_answer" == "n" || "$prism_answer" == "N" ]]; then
+        echo "Prismlauncher Driver installation skipped."
         break
     else
         echo "Invalid input. Please enter 'y' or 'n'."
@@ -169,6 +202,40 @@ while true; do
        echo 'fs.file-max=2097152' | sudo tee -a /etc/sysctl.conf
        sysctl -w fs.xfs.xfssyncd_centisecs=10000
        echo 'echo 'fs.xfs.xfssyncd_centisecs=10000' | sudo tee -a /etc/sysctl.conf' | sudo tee -a /etc/sysctl.conf
+
+# ZRAM Setup
+echo "Setting up zram swap (half of total RAM)..."
+
+# Install zram-generator if not present
+if ! command -v zramctl >/dev/null || ! [[ -f /usr/lib/systemd/system-generators/zram-generator ]]; then
+  echo "Installing zram-generator..."
+  pacman -S --noconfirm zram-generator
+fi
+
+# Get total memory in MiB
+TOTAL_MEM=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo)
+ZRAM_SIZE=$((TOTAL_MEM / 2))
+
+# Create zram config
+mkdir -p /etc/systemd/zram-generator.conf.d
+
+cat > /etc/systemd/zram-generator.conf.d/00-zram.conf <<EOF
+[zram0]
+zram-size = ${ZRAM_SIZE}
+compression-algorithm = zstd
+EOF
+
+# Trigger zram generator
+systemctl daemon-reexec
+
+# Start zram swap
+if systemctl start systemd-zram-setup@zram0.service; then
+  echo "ZRAM swap started successfully with size ${ZRAM_SIZE}MiB."
+else
+  echo "Failed to start ZRAM swap. Check configuration and journal logs."
+fi
+
+
         break
     elif [[ "$General_answer" == "n" || "$General_answer" == "N" ]]; then
         echo "General Gaming Optimizations skipped."
@@ -184,7 +251,7 @@ while true; do
     read -r driver_answer
 
     if [[ "$driver_answer" == "y" || "$driver_answer" == "Y" ]]; then
-     pacman -S --noconfirm --needed sudo pacman -S nvidia nvidia-settings nvidia-utils lib32-nvidia-utils lib32-opencl-nvidia opencl-nvidia libvdpau libxnvctrl vulkan-icd-loader lib32-vulkan-icd-loader
+     pacman -S --noconfirm --needed nvidia-settings nvidia-utils lib32-nvidia-utils lib32-opencl-nvidia opencl-nvidia libvdpau libxnvctrl vulkan-icd-loader lib32-vulkan-icd-loader
     mkinitcpio -P
     echo "NVIDIA drivers installed successfully."
     break
