@@ -212,7 +212,7 @@ while true; do
        sysctl -w fs.file-max=2097152
        echo 'fs.file-max=2097152' | sudo tee -a /etc/sysctl.conf
        sysctl -w fs.xfs.xfssyncd_centisecs=10000
-       echo 'echo 'fs.xfs.xfssyncd_centisecs=10000' | sudo tee -a /etc/sysctl.conf' | sudo tee -a /etc/sysctl.conf
+      echo 'fs.xfs.xfssyncd_centisecs=10000' | tee -a /etc/sysctl.conff
 
 # ZRAM Setup
 echo "Setting up zram swap (half of total RAM)..."
@@ -256,18 +256,56 @@ fi
     fi
 done
 
-# Install nvidia drivers
+# Install NVIDIA drivers
 while true; do
     echo "Install Nvidia drivers? (y/n)"
     read -r driver_answer
 
     if [[ "$driver_answer" == "y" || "$driver_answer" == "Y" ]]; then
-     pacman -S --noconfirm --needed nvidia-dkms nvidia-settings nvidia-utils lib32-nvidia-utils lib32-opencl-nvidia opencl-nvidia libvdpau libxnvctrl vulkan-icd-loader lib32-vulkan-icd-loader
-    mkinitcpio -P
-    echo "NVIDIA drivers installed successfully."
-    break
+        # Detect NVIDIA GPU model
+        gpu_model=$(lspci | grep -i 'VGA\|3D' | grep -i nvidia)
+
+        if [[ -z "$gpu_model" ]]; then
+            echo "No NVIDIA GPU found. No driver will be installed."
+            exit 0
+        fi
+
+        # Extract PCI ID
+        pci_id=$(lspci -n | grep -i 'VGA\|3D' | grep -i nvidia | awk '{print $3}' | cut -d: -f2)
+
+        # Convert PCI ID to decimal
+        pci_id_dec=$((16#${pci_id}))
+
+        # Select driver based on PCI ID
+        if (( pci_id_dec >= 0x2500 )); then
+            driver="nvidia-open"
+        elif (( pci_id_dec >= 0x1000 )); then
+            driver="nvidia"
+        elif (( pci_id_dec >= 0x0C00 )); then
+            driver="nvidia-470xx"
+        elif (( pci_id_dec >= 0x0600 )); then
+            driver="nvidia-390xx"
+        elif (( pci_id_dec >= 0x0300 )); then
+            driver="nvidia-340xx"
+        else
+            driver="nouveau"
+        fi
+
+        echo "Detected GPU: $gpu_model"
+        echo "Installing driver: $driver"
+
+        # Install the driver package
+        if [[ "$driver" == "nouveau" ]]; then
+            sudo pacman -S --needed xf86-video-nouveau
+        else
+            sudo pacman -S --needed $driver
+        fi
+
+        echo "NVIDIA drivers installed successfully."
+        break
+
     elif [[ "$driver_answer" == "n" || "$driver_answer" == "N" ]]; then
-        echo "Nvidia Driver installation skipped."
+        echo "NVIDIA driver installation skipped."
         break
     else
         echo "Invalid input. Please enter 'y' or 'n'."
@@ -380,7 +418,7 @@ while true; do
         sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
         echo "protonplus installed succesfully."
         break
-    elif [[ "proton_answer" =~ ^[Nn]$ ]]; then
+    elif [[ "$proton_answer" =~ ^[Nn]$ ]]; then
         echo "proton installation skipped."
         break
     else
@@ -398,7 +436,7 @@ while true; do
         sudo ./cachyos-repo.sh
         echo "cachy repos installed succesfully."
         break
-    elif [[ "cachy_answer" =~ ^[Nn]$ ]]; then
+    elif [[ "$cachy_answer" =~ ^[Nn]$ ]]; then
         echo "cachy repos installation skipped."
         break
     else
