@@ -42,7 +42,7 @@ EOF
 )"
 
 
-# Ask to install necessary base dependencies and add multilib repo
+# Install necessary base dependencies and add multilib repo
 while true; do
     echo "Would you like to install required dependencies (yay, reflector, wget, gnupg, curl, flatpak, etc.) and add the multilib repository? (y/n)"
     read -r deps_answer
@@ -71,29 +71,6 @@ elif [[ "$deps_answer" == "n" || "$deps_answer" == "N" ]]; then
 else
     echo "Invalid input. Please enter 'y' or 'n'."
 fi
-done
-
-# Chaotic-AUR
-while true; do
-    echo "Would you like to add the Chaotic-AUR Repository? (y/n)"
-    read -r chaotic_answer
-
-    if [[ "$chaotic_answer" == "y" || "$chaotic_answer" == "Y" ]]; then
-        echo "Downloading and installing chaotic-AUR..."
-        pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-        pacman-key --lsign-key 3056513887B78AEB
-        pacman -U --noconfirm \
-        'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
-        'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
-        echo -e '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' | sudo tee -a /etc/pacman.conf
-        pacman -Syyuu --noconfirm
-        break
-    elif [[ "$chaotic_answer" == "n" || "$chaotic_answer" == "N" ]]; then
-        echo "Chaotic-AUR installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
 done
 
 # Lutris installation
@@ -129,25 +106,10 @@ while true; do
     fi
 done
 
-# lug-helper installation
-while true; do
-    echo "Would you like to install lug-helper (Star-citizen)? (y/n)"
-    read -r lug_answer
-
-    if [[ "$lug_answer" == "y" || "$lug_answer" == "Y" ]]; then
-        sudo -u "$TARGET_USER" yay -S --noconfirm --needed lug-helper
-        break
-    elif [[ "$lug_answer" == "n" || "$lug_answer" == "N" ]]; then
-        echo "lug-helper installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
 
 # Heroic Games Launcher installation
 while true; do
-    echo "Would you like to install Heroic Games Launcher (Epic/GOG/PRIME support)? (y/n)"
+    echo "Would you like to install Heroic Games Launcher drom AUR (Epic/GOG/PRIME support and managing other Apps and Games)? (y/n)"
     read -r heroic_answer
 
     if [[ "$heroic_answer" == "y" || "$heroic_answer" == "Y" ]]; then
@@ -164,7 +126,7 @@ done
 
 # Install prismlauncher
 while true; do
-    echo "Install prismlauncher (Minecraft launcher for mods? (y/n)"
+    echo "Install prismlauncher (Minecraft launcher for mods)? (y/n)"
     read -r prism_answer
 
     if [[ "$prism_answer" == "y" || "$prism_answer" == "Y" ]]; then
@@ -182,7 +144,7 @@ done
 
 # General Gaming Optimizations
 while true; do
-    echo "Apply General Gaming optimizations and install necessary software(arch-gaming-meta/Cachyos-ananicy rules)? (y/n)"
+    echo "Apply General Gaming optimizations and install necessary software(arch-gaming-meta/Cachyos-ananicy rules/ZRAM)? (y/n)"
     read -r General_answer
 
     if [[ "$General_answer" == "y" || "$General_answer" == "Y" ]]; then
@@ -261,7 +223,7 @@ while true; do
     read -r driver_answer
 
     if [[ "$driver_answer" == "y" || "$driver_answer" == "Y" ]]; then
-        # Detect NVIDIA GPU model
+        # Detect NVIDIA GPU
         gpu_model=$(lspci | grep -i 'VGA\|3D' | grep -i nvidia)
 
         if [[ -z "$gpu_model" ]]; then
@@ -269,14 +231,14 @@ while true; do
             exit 0
         fi
 
-        # Extract PCI device ID (e.g. 10de:2500)
+        # Extract PCI device ID for identification of GPU model
         pci_entry=$(lspci -n | grep -i 'VGA\|3D' | grep -i nvidia | head -n1 | awk '{print $3}')
         device_id_hex=${pci_entry#*:}  # part after colon
 
-        # Convert hex to decimal for comparison
+        # Convert hex to decimal
         device_id_dec=$((16#$device_id_hex))
 
-        # Select driver based on PCI device ID
+        # Select driver
         if (( device_id_dec >= 0x2500 )); then
             driver="nvidia-open"
         elif (( device_id_dec >= 0x1000 )); then
@@ -334,7 +296,7 @@ while true; do
 
             if (( missing == 1 )); then
                 echo "Installing missing packages..."
-                sudo pacman -S --needed "${pkgs[@]}"
+                pacman -S --needed "${pkgs[@]}"
                 if [[ $? -ne 0 ]]; then
                     echo "Error installing packages. Aborting."
                     exit 1
@@ -345,7 +307,7 @@ while true; do
             return 0
         }
 
-        # Check and install packages if needed
+        # Check and install drivers
         check_driver_packages "$driver"
 
         echo "NVIDIA driver setup completed."
@@ -381,7 +343,7 @@ while true; do
     echo "Install Wine and Winetricks? (y/n)"
     read -r wine_answer
     if [[ "$wine_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm --needed wine-staging winetricks wine-mono
+        pacman -S --noconfirm --needed wine winetricks wine-mono
         echo "Wine and Winetricks installed succesfully."
         break
     elif [[ "$wine_answer" =~ ^[Nn]$ ]]; then
@@ -394,35 +356,20 @@ done
 
 # Install system monitoring tools
 while true; do
-    echo "Install system monitoring tools (fastfetch/nvtop/htop/btop)? (y/n)"
+    echo "Install system monitoring tools (mission center)? (y/n)"
     read -r monitoring_answer
     if [[ "$monitoring_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm --needed fastfetch nvtop htop btop
+        pacman -S --noconfirm --needed mission-center
         echo "System monitoring tools installed successfully."
         break
     elif [[ "$monitoring_answer" =~ ^[Nn]$ ]]; then
-        echo "Monitoring tools installation skipped."
+        echo "Mission Center installation skipped."
         break
     else
         echo "Invalid input. Please enter 'y' or 'n'."
     fi
 done
 
-# Install linutil
-while true; do
-    echo "Install linutil for extra setup options ? (y/n)"
-    read -r linutil_answer
-    if [[ "$linutil_answer" =~ ^[Yy]$ ]]; then
-        sudo -u "$TARGET_USER" yay -S --noconfirm --needed linutil-bin 
-        echo "Linutil installed successfully."
-        break
-    elif [[ "$linutil_answer" =~ ^[Nn]$ ]]; then
-        echo "Linutil installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
 
 # Install lact
 while true; do
@@ -440,26 +387,10 @@ while true; do
     fi
 done
 
-# Install and configure Firewall
-while true; do
-    echo "Install and configure Firewall(UFW)? (y/n)"
-    read -r ufw_answer
-    if [[ "$ufw_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm --needed ufw
-        systemctl enable ufw
-        echo "ufw installed successfully."
-        break
-    elif [[ "$ufw_answer" =~ ^[Nn]$ ]]; then
-        echo "ufw installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
 
 # Install protonplus
 while true; do
-    echo "Install protonplus (manage compatibility tools like PROTON)? (y/n)"
+    echo "Install protonplus from AUR (manage compatibility tools like PROTON)? (y/n)"
     read -r proton_answer
     if [[ "$proton_answer" =~ ^[Yy]$ ]]; then
         sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
@@ -473,9 +404,32 @@ while true; do
     fi
 done
 
+# Chaotic-AUR
+while true; do
+    echo "Would you like to add the Chaotic-AUR Repository for precompiled Aur packages (EXPERIMENTAL NOT RECOMMENDED FOR UNEXPERIENCED USERS)? (y/n)"
+    read -r chaotic_answer
+
+    if [[ "$chaotic_answer" == "y" || "$chaotic_answer" == "Y" ]]; then
+        echo "Downloading and installing chaotic-AUR..."
+        pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+        pacman-key --lsign-key 3056513887B78AEB
+        pacman -U --noconfirm \
+        'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
+        'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+        echo -e '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' | sudo tee -a /etc/pacman.conf
+        pacman -Syyuu --noconfirm
+        break
+    elif [[ "$chaotic_answer" == "n" || "$chaotic_answer" == "N" ]]; then
+        echo "Chaotic-AUR installation skipped."
+        break
+    else
+        echo "Invalid input. Please enter 'y' or 'n'."
+    fi
+done
+
 # Install cachyos repos
 while true; do
-    echo "Install cachyos repos for optimized packages? (y/n)"
+    echo "Install cachyos repos for optimized packages (EXPERIMENTAL NOT RECOMMENDED FOR UNEXPERIENCED USERS)? (y/n)"
     read -r cachy_answer
     if [[ "$cachy_answer" =~ ^[Yy]$ ]]; then
         curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
@@ -492,9 +446,9 @@ while true; do
 done
 
 
-# Install cachyos kernel
+# compile cachyos kernel
 while true; do
-    echo "Install cachyos kernel? (y/n)"
+    echo "compile cachyos kernel for lower latency and sometimes higher fps (this will take a long time if you dont have chaotic AUR or Cachy repos )? (y/n)"
     read -r kernel_answer
     if [[ "$kernel_answer" =~ ^[Yy]$ ]]; then
     sudo -u "$TARGET_USER" yay -S --noconfirm --needed linux-cachyos linux-cachyos-headers
@@ -502,7 +456,7 @@ while true; do
         echo "Kernel installed successfully."
         break
     elif [[ "kernel_answer" =~ ^[Nn]$ ]]; then
-        echo "Kernel installation  skipped."
+        echo "Kernel compilation skipped."
         break
     else
         echo "Invalid input. Please enter 'y' or 'n'."
