@@ -50,6 +50,14 @@ while true; do
 if [[ "$deps_answer" == "y" || "$deps_answer" == "Y" ]]; then
     echo "Updating and upgrading system packages..."
     pacman -Syu --noconfirm
+    # Enable multilib repo if not already enabled
+if ! grep -Pzo '\[multilib\]\n(?:#.*\n)*#?Include = /etc/pacman.d/mirrorlist' /etc/pacman.conf | grep -qv '^Include'; then
+    echo "Enabling multilib repository..."
+    sudo sed -i '/^\[multilib\]$/,/^$/{s/^#\(Include = \/etc\/pacman\.d\/mirrorlist\)/\1/}' /etc/pacman.conf
+    sudo pacman -Sy
+else
+    echo "Multilib repository already enabled."
+fi
     echo "Checking and installing required dependencies..."
     pacman -S --needed --noconfirm reflector wget gnupg curl git flatpak base-devel
     cd /tmp
