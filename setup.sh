@@ -179,7 +179,8 @@ while true; do
 
     if [[ "$General_answer" == "y" || "$General_answer" == "Y" ]]; then
 # Install software
-       sudo -u "$TARGET_USER" yay -S --noconfirm --needed arch-gaming-meta
+       sudo -u "$TARGET_USER" yay -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
+       systemctl enable --now ananicy-cpp.service
        
 #systctl.d tweaks
        sysctl -w vm.swappiness=100
@@ -300,7 +301,7 @@ done
 
 # Installsystem monitoring tools
 while true; do
-    echo "Install system monitoring tools (fastfetch/nvtop/htop/btop? (y/n)"
+    echo "Install system monitoring tools (fastfetch/nvtop/htop/btop)? (y/n)"
     read -r monitoring_answer
     if [[ "$monitoring_answer" =~ ^[Yy]$ ]]; then
         pacman -S --noconfirm --needed fastfetch nvtop htop btop
