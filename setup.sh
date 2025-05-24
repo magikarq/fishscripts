@@ -256,7 +256,6 @@ fi
     fi
 done
 
-# Install NVIDIA drivers
 while true; do
     echo "Install Nvidia drivers? (y/n)"
     read -r driver_answer
@@ -270,45 +269,93 @@ while true; do
             exit 0
         fi
 
-        # Extract PCI ID
-        pci_id=$(lspci -n | grep -i 'VGA\|3D' | grep -i nvidia | awk '{print $3}' | cut -d: -f2)
+        # Extract PCI device ID (e.g. 10de:2500)
+        pci_entry=$(lspci -n | grep -i 'VGA\|3D' | grep -i nvidia | head -n1 | awk '{print $3}')
+        device_id_hex=${pci_entry#*:}  # part after colon
 
-        # Convert PCI ID to decimal
-        pci_id_dec=$((16#${pci_id}))
+        # Convert hex to decimal for comparison
+        device_id_dec=$((16#$device_id_hex))
 
-        # Select driver based on PCI ID
-        if (( pci_id_dec >= 0x2500 )); then
+        # Select driver based on PCI device ID
+        if (( device_id_dec >= 0x2500 )); then
             driver="nvidia-open"
-        elif (( pci_id_dec >= 0x1000 )); then
+        elif (( device_id_dec >= 0x1000 )); then
             driver="nvidia"
-        elif (( pci_id_dec >= 0x0C00 )); then
+        elif (( device_id_dec >= 0x0C00 )); then
             driver="nvidia-470xx"
-        elif (( pci_id_dec >= 0x0600 )); then
+        elif (( device_id_dec >= 0x0600 )); then
             driver="nvidia-390xx"
-        elif (( pci_id_dec >= 0x0300 )); then
+        elif (( device_id_dec >= 0x0300 )); then
             driver="nvidia-340xx"
         else
             driver="nouveau"
         fi
 
         echo "Detected GPU: $gpu_model"
-        echo "Installing driver: $driver"
+        echo "Selected driver: $driver"
 
-        # Install the driver package
-        if [[ "$driver" == "nouveau" ]]; then
-            sudo pacman -S --needed xf86-video-nouveau
-        else
-            sudo pacman -S --needed $driver
-        fi
+        check_driver_packages() {
+            local driver=$1
 
-        echo "NVIDIA drivers installed successfully."
+            case "$driver" in
+                nvidia)
+                    pkgs=(nvidia nvidia-utils nvidia-settings)
+                    ;;
+                nvidia-open)
+                    pkgs=(nvidia-open nvidia-utils nvidia-settings)
+                    ;;
+                nvidia-470xx)
+                    pkgs=(nvidia-470xx nvidia-470xx-utils)
+                    ;;
+                nvidia-390xx)
+                    pkgs=(nvidia-390xx nvidia-390xx-utils)
+                    ;;
+                nvidia-340xx)
+                    pkgs=(nvidia-340xx nvidia-340xx-utils)
+                    ;;
+                nouveau)
+                    pkgs=(xf86-video-nouveau)
+                    ;;
+                *)
+                    echo "Unknown driver: $driver"
+                    return 1
+                    ;;
+            esac
+
+            local missing=0
+            for pkg in "${pkgs[@]}"; do
+                if ! pacman -Q "$pkg" &>/dev/null; then
+                    echo "Package $pkg is NOT installed."
+                    missing=1
+                else
+                    echo "Package $pkg is installed."
+                fi
+            done
+
+            if (( missing == 1 )); then
+                echo "Installing missing packages..."
+                sudo pacman -S --needed "${pkgs[@]}"
+                if [[ $? -ne 0 ]]; then
+                    echo "Error installing packages. Aborting."
+                    exit 1
+                fi
+            else
+                echo "All required packages are already installed."
+            fi
+            return 0
+        }
+
+        # Check and install packages if needed
+        check_driver_packages "$driver"
+
+        echo "NVIDIA driver setup completed."
         break
 
     elif [[ "$driver_answer" == "n" || "$driver_answer" == "N" ]]; then
         echo "NVIDIA driver installation skipped."
         break
     else
-        echo "Invalid input. Please enter 'y' or 'n'."
+        echo "Please answer y (yes) or n (no)."
     fi
 done
 
