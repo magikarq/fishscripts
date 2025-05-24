@@ -44,7 +44,7 @@ EOF
 
 # Ask to install necessary base dependencies and add multilib repo
 while true; do
-    echo "Would you like to install required dependencies (yay reflector,wget, gnupg, curl, flatpak, etc.) and add the multilib repository? (y/n)"
+    echo "Would you like to install required dependencies (yay, reflector, wget, gnupg, curl, flatpak, etc.) and add the multilib repository? (y/n)"
     read -r deps_answer
 
 if [[ "$deps_answer" == "y" || "$deps_answer" == "Y" ]]; then
@@ -129,7 +129,7 @@ while true; do
     fi
 done
 
-# lug-helperr installation
+# lug-helper installation
 while true; do
     echo "Would you like to install lug-helper (Star-citizen)? (y/n)"
     read -r lug_answer
@@ -392,13 +392,13 @@ while true; do
     fi
 done
 
-# Installsystem monitoring tools
+# Install system monitoring tools
 while true; do
     echo "Install system monitoring tools (fastfetch/nvtop/htop/btop)? (y/n)"
     read -r monitoring_answer
     if [[ "$monitoring_answer" =~ ^[Yy]$ ]]; then
         pacman -S --noconfirm --needed fastfetch nvtop htop btop
-        echo "System monitoring tools installed succesfully."
+        echo "System monitoring tools installed successfully."
         break
     elif [[ "$monitoring_answer" =~ ^[Nn]$ ]]; then
         echo "Monitoring tools installation skipped."
@@ -414,7 +414,7 @@ while true; do
     read -r linutil_answer
     if [[ "$linutil_answer" =~ ^[Yy]$ ]]; then
         sudo -u "$TARGET_USER" yay -S --noconfirm --needed linutil-bin 
-        echo "Linutil installed succesfully."
+        echo "Linutil installed successfully."
         break
     elif [[ "$linutil_answer" =~ ^[Nn]$ ]]; then
         echo "Linutil installation skipped."
@@ -430,7 +430,7 @@ while true; do
     read -r lact_answer
     if [[ "$lact_answer" =~ ^[Yy]$ ]]; then
         pacman -S --noconfirm --needed lact
-        echo "lact installed succesfully."
+        echo "lact installed successfully."
         break
     elif [[ "$lact_answer" =~ ^[Nn]$ ]]; then
         echo "lact installation skipped."
@@ -447,7 +447,7 @@ while true; do
     if [[ "$ufw_answer" =~ ^[Yy]$ ]]; then
         pacman -S --noconfirm --needed ufw
         systemctl enable ufw
-        echo "ufw installed succesfully."
+        echo "ufw installed successfully."
         break
     elif [[ "$ufw_answer" =~ ^[Nn]$ ]]; then
         echo "ufw installation skipped."
@@ -463,7 +463,7 @@ while true; do
     read -r proton_answer
     if [[ "$proton_answer" =~ ^[Yy]$ ]]; then
         sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
-        echo "protonplus installed succesfully."
+        echo "protonplus installed successfully."
         break
     elif [[ "$proton_answer" =~ ^[Nn]$ ]]; then
         echo "proton installation skipped."
@@ -481,7 +481,7 @@ while true; do
         curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
         tar xvf cachyos-repo.tar.xz && cd cachyos-repo
         sudo ./cachyos-repo.sh
-        echo "cachy repos installed succesfully."
+        echo "cachy repos installed successfully."
         break
     elif [[ "$cachy_answer" =~ ^[Nn]$ ]]; then
         echo "cachy repos installation skipped."
@@ -499,7 +499,7 @@ while true; do
     if [[ "$kernel_answer" =~ ^[Yy]$ ]]; then
     sudo -u "$TARGET_USER" yay -S --noconfirm --needed linux-cachyos linux-cachyos-headers
 
-        echo "Kernel installed succesfully."
+        echo "Kernel installed successfully."
         break
     elif [[ "kernel_answer" =~ ^[Nn]$ ]]; then
         echo "Kernel installation  skipped."
