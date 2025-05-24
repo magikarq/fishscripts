@@ -174,7 +174,7 @@ done
 
 # General Gaming Optimizations
 while true; do
-    echo "Apply General Gaming optimizations and install necessary software(arch-gaming-meta)? (y/n)"
+    echo "Apply General Gaming optimizations and install necessary software(arch-gaming-meta/Cachyos-ananicy rules)? (y/n)"
     read -r General_answer
 
     if [[ "$General_answer" == "y" || "$General_answer" == "Y" ]]; then
@@ -379,18 +379,36 @@ while true; do
     fi
 done
 
-# Install TKG kernel
+# Install cachyos repos
 while true; do
-    echo "Compile TKG Kernel? (y/n)"
+    echo "Install cachyos repos for optimized packages? (y/n)"
+    read -r cachy_answer
+    if [[ "$cachy_answer" =~ ^[Yy]$ ]]; then
+        curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
+        tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+        sudo ./cachyos-repo.sh
+        echo "cachy repos installed succesfully."
+        break
+    elif [[ "cachy_answer" =~ ^[Nn]$ ]]; then
+        echo "cachy repos installation skipped."
+        break
+    else
+        echo "Invalid input. Please enter 'y' or 'n'."
+    fi
+done
+
+
+# Install cachyos kernel
+while true; do
+    echo "Install cachyos kernel? (y/n)"
     read -r kernel_answer
     if [[ "$kernel_answer" =~ ^[Yy]$ ]]; then
-        git clone https://github.com/Frogging-Family/linux-tkg.git
-cd linux-tkg
-makepkg -si
-        echo "Kernel compiled succesfully."
+    sudo -u "$TARGET_USER" yay -S --noconfirm --needed linux-cachyos linux-cachyos-headers
+
+        echo "Kernel installed succesfully."
         break
     elif [[ "kernel_answer" =~ ^[Nn]$ ]]; then
-        echo "Kernel compilation skipped."
+        echo "Kernel installation  skipped."
         break
     else
         echo "Invalid input. Please enter 'y' or 'n'."
