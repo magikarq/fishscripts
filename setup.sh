@@ -6,8 +6,35 @@ if [[ "$EUID" -ne 0 ]]; then
   exit 1
 fi
 
-# Determine target user (assumes script is run via sudo)
-TARGET_USER=$(logname)
+# Get list of users with home directories
+echo "Available users:"
+mapfile -t users < <(ls /home)
+for i in "${!users[@]}"; do
+    echo "$((i+1)). ${users[$i]}"
+done
+
+# Get user selection
+while true; do
+    echo "Please select a user number (1-${#users[@]}):"
+    read -r user_num
+    
+    # Validate input is a number
+    if ! [[ "$user_num" =~ ^[0-9]+$ ]]; then
+        echo "Please enter a valid number."
+        continue
+    fi
+    
+    # Validate number is in range
+    if (( user_num < 1 || user_num > ${#users[@]} )); then
+        echo "Please enter a number between 1 and ${#users[@]}."
+        continue
+    fi
+    
+    # Set target user
+    TARGET_USER="${users[$((user_num-1))]}"
+    break
+done
+
 HOME_DIR="/home/$TARGET_USER"
 SETUP_DIR="$HOME_DIR/Arch-setup"
 
@@ -60,9 +87,9 @@ else
 fi
     echo "Checking and installing required dependencies..."
     pacman -S --needed --noconfirm reflector wget gnupg curl git flatpak base-devel
-    cd /tmp
+    cd /tmp || exit 1
 sudo -u "$TARGET_USER" git clone https://aur.archlinux.org/yay.git
-cd yay
+cd yay || exit 1
 sudo -u "$TARGET_USER" makepkg -si --noconfirm
     break
 elif [[ "$deps_answer" == "n" || "$deps_answer" == "N" ]]; then
@@ -151,8 +178,17 @@ while true; do
 # Install software
        sudo -u "$TARGET_USER" yay -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
        systemctl enable --now ananicy-cpp.service
-       
-#systctl.d tweaks
+
+# Check with User if they want to apply these tweaks
+while true; do
+    echo "Would you like to apply Kernel tweaks? (y/n)"
+    read -r tweaks_answer
+
+    if [[ "$tweaks_answer" == "y" || "$tweaks_answer" == "Y" ]]; then
+        # Create sysctl.conf backup
+        cp /etc/sysctl.conf /etc/sysctl.conf.bak
+        
+        #systctl.d tweaks
        sysctl -w vm.swappiness=100
        echo 'vm.swappiness=100' | sudo tee -a /etc/sysctl.conf
        sysctl -w vm.vfs_cache_pressure=50
@@ -174,7 +210,12 @@ while true; do
        sysctl -w fs.file-max=2097152
        echo 'fs.file-max=2097152' | sudo tee -a /etc/sysctl.conf
        sysctl -w fs.xfs.xfssyncd_centisecs=10000
-      echo 'fs.xfs.xfssyncd_centisecs=10000' | tee -a /etc/sysctl.conff
+      echo 'fs.xfs.xfssyncd_centisecs=10000' | tee -a /etc/sysctl.conf
+    else
+        echo "Tweaks skipped."
+        break
+    fi
+done
 
 # ZRAM Setup
 echo "Setting up zram swap (half of total RAM)..."
@@ -433,7 +474,7 @@ while true; do
     read -r cachy_answer
     if [[ "$cachy_answer" =~ ^[Yy]$ ]]; then
         curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
-        tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+        tar xvf cachyos-repo.tar.xz && cd cachyos-repo || exit 1
         sudo ./cachyos-repo.sh
         echo "cachy repos installed successfully."
         break
@@ -455,7 +496,7 @@ while true; do
 
         echo "Kernel installed successfully."
         break
-    elif [[ "kernel_answer" =~ ^[Nn]$ ]]; then
+    elif [[ "$kernel_answer" =~ ^[Nn]$ ]]; then
         echo "Kernel compilation skipped."
         break
     else
