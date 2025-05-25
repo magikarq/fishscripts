@@ -1,23 +1,33 @@
 #!/usr/bin/env bash
 
-# Check if the script is run as root
+ask_user() {
+    local prompt="$1"
+    local response
+    while true; do
+        read -rp "$prompt (y/n): " response
+        case "$response" in
+            [Yy]*) return 0 ;;
+            [Nn]*) return 1 ;;
+            *) echo "Please answer y or n." ;;
+        esac
+    done
+}
+
+# Check for root
 if [[ "$EUID" -ne 0 ]]; then
   echo "Please run this script as root or using sudo."
   exit 1
 fi
 
-# Determine target user (assumes script is run via sudo)
 TARGET_USER=$(logname)
 HOME_DIR="/home/$TARGET_USER"
 SETUP_DIR="$HOME_DIR/Arch-setup"
 
-# Create setup directory
 mkdir -p "$SETUP_DIR"
 chown "$TARGET_USER:$TARGET_USER" "$SETUP_DIR"
 
 # Display logo
-echo -e " $(cat << 'EOF'
-
+cat << 'EOF'
 
                    -`
                   .o+`
@@ -39,426 +49,108 @@ echo -e " $(cat << 'EOF'
  `++:.                           `-/+/
 
 EOF
-)"
 
-
-# Install necessary base dependencies and add multilib repo
-while true; do
-    echo "Would you like to install required dependencies (yay, reflector, wget, gnupg, curl, flatpak, etc.) and add the multilib repository? (y/n)"
-    read -r deps_answer
-
-if [[ "$deps_answer" == "y" || "$deps_answer" == "Y" ]]; then
-    echo "Updating and upgrading system packages..."
-    pacman -Syu --noconfirm
-    # Enable multilib repo if not already enabled
-if ! grep -Pzo '\[multilib\]\n(?:#.*\n)*#?Include = /etc/pacman.d/mirrorlist' /etc/pacman.conf | grep -qv '^Include'; then
-    echo "Enabling multilib repository..."
-    sudo sed -i '/^\[multilib\]$/,/^$/{s/^#\(Include = \/etc\/pacman\.d\/mirrorlist\)/\1/}' /etc/pacman.conf
-    sudo pacman -Sy
+# Install base dependencies
+if ask_user "Install base dependencies  and enable multilib repo?"; then
+  pacman -Syu --noconfirm
+  if ! grep -Pzo '\[multilib\]\n(?:#.*\n)*#?Include = /etc/pacman.d/mirrorlist' /etc/pacman.conf | grep -qv '^Include'; then
+    sed -i '/^\[multilib\]$/,/^$/{s/^#\(Include = \/etc\/pacman\.d\/mirrorlist\)/\1/}' /etc/pacman.conf
+    pacman -Sy
+  fi
+  pacman -S --needed --noconfirm reflector wget gnupg curl git base-devel
+  cd /tmp
+  sudo -u "$TARGET_USER" git clone https://aur.archlinux.org/yay.git
+  cd yay
+  sudo -u "$TARGET_USER" makepkg -si --noconfirm
 else
-    echo "Multilib repository already enabled."
+  echo "Dependencies required. Exiting."
+  exit 1
 fi
-    echo "Checking and installing required dependencies..."
-    pacman -S --needed --noconfirm reflector wget gnupg curl git flatpak base-devel
-    cd /tmp
-sudo -u "$TARGET_USER" git clone https://aur.archlinux.org/yay.git
-cd yay
-sudo -u "$TARGET_USER" makepkg -si --noconfirm
-    break
-elif [[ "$deps_answer" == "n" || "$deps_answer" == "N" ]]; then
-    echo "Dependency installation is required for this script to work. Exiting."
-    exit 1
-else
-    echo "Invalid input. Please enter 'y' or 'n'."
+
+# Set fastest mirrors
+if ask_user "Set fastest mirrors?"; then
+reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
+pacman -Syy
 fi
-done
 
 # Lutris installation
-while true; do
-    echo "Would you like to install Lutris (EA/EPIC/UBISOFT support)? (y/n)"
-    read -r lutris_answer
-
-    if [[ "$lutris_answer" == "y" || "$lutris_answer" == "Y" ]]; then
-        echo "Downloading and installing Lutris..."
-       pacman -S --noconfirm --needed lutris
-        break
-    elif [[ "$lutris_answer" == "n" || "$lutris_answer" == "N" ]]; then
-        echo "Lutris installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
+if ask_user "Install Lutris?"; then
+  pacman -S --noconfirm --needed lutris
+fi
 
 # Steam installation
-while true; do
-    echo "Would you like to install steam? (y/n)"
-    read -r steam_answer
-
-    if [[ "$steam_answer" == "y" || "$steam_answer" == "Y" ]]; then
-       sudo pacman -S --noconfirm --needed steam
-        break
-    elif [[ "$steam_answer" == "n" || "$steam_answer" == "N" ]]; then
-        echo "Steam installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
+if ask_user "Install Steam?"; then
+  pacman -S --noconfirm --needed steam
+fi
 
 # Heroic Games Launcher installation
-while true; do
-    echo "Would you like to install Heroic Games Launcher drom AUR (Epic/GOG/PRIME support and managing other Apps and Games)? (y/n)"
-    read -r heroic_answer
-
-    if [[ "$heroic_answer" == "y" || "$heroic_answer" == "Y" ]]; then
-       sudo -u "$TARGET_USER" yay -S --noconfirm --needed heroic-games-launcher-bin
-        break
-
-    elif [[ "$heroic_answer" == "n" || "$heroic_answer" == "N" ]]; then
-        echo "Heroic Games Launcher installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-# Install prismlauncher
-while true; do
-    echo "Install prismlauncher (Minecraft launcher for mods)? (y/n)"
-    read -r prism_answer
-
-    if [[ "$prism_answer" == "y" || "$prism_answer" == "Y" ]]; then
-     pacman -S --noconfirm --needed prismlauncher
-    echo "Prismlauncher installed successfully."
-    break
-    elif [[ "$prism_answer" == "n" || "$prism_answer" == "N" ]]; then
-        echo "Prismlauncher Driver installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-
-# General Gaming Optimizations
-while true; do
-    echo "Apply General Gaming optimizations and install necessary software(arch-gaming-meta/Cachyos-ananicy rules/ZRAM)? (y/n)"
-    read -r General_answer
-
-    if [[ "$General_answer" == "y" || "$General_answer" == "Y" ]]; then
-# Install software
-       sudo -u "$TARGET_USER" yay -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
-       systemctl enable --now ananicy-cpp.service
-       
-#systctl.d tweaks
-       sysctl -w vm.swappiness=100
-       echo 'vm.swappiness=100' | sudo tee -a /etc/sysctl.conf
-       sysctl -w vm.vfs_cache_pressure=50
-       echo 'vm.vfs_cache_pressure=50' | sudo tee -a /etc/sysctl.conf
-       sysctl -w vm.dirty_bytes=268435456
-       echo 'vm.dirty_bytes=268435456' | sudo tee -a /etc/sysctl.conf
-       sysctl -w vm.dirty_background_bytes=67108864
-       echo 'vm.dirty_background_bytes=67108864' | sudo tee -a /etc/sysctl.conf
-       sysctl -w vm.dirty_writeback_centisecs=1500
-       echo 'vm.dirty_writeback_centisecs=1500' | sudo tee -a /etc/sysctl.conf
-       sysctl -w kernel.nmi_watchdog=0
-       echo 'kernel.nmi_watchdog=0' | sudo tee -a /etc/sysctl.conf
-       sysctl -w kernel.unprivileged_userns_clone=1
-       echo 'kernel.unprivileged_userns_clone=1' | sudo tee -a /etc/sysctl.conf
-       sysctl -w kernel.kptr_restrict=2
-       echo 'kernel.kptr_restrict=2' | sudo tee -a /etc/sysctl.conf
-       sysctl -w net.core.netdev_max_backlog=4096
-       echo 'net.core.netdev_max_backlog=4096' | sudo tee -a /etc/sysctl.conf
-       sysctl -w fs.file-max=2097152
-       echo 'fs.file-max=2097152' | sudo tee -a /etc/sysctl.conf
-       sysctl -w fs.xfs.xfssyncd_centisecs=10000
-      echo 'fs.xfs.xfssyncd_centisecs=10000' | tee -a /etc/sysctl.conff
-
-# ZRAM Setup
-echo "Setting up zram swap (half of total RAM)..."
-
-# Install zram-generator if not present
-if ! command -v zramctl >/dev/null || ! [[ -f /usr/lib/systemd/system-generators/zram-generator ]]; then
-  echo "Installing zram-generator..."
-  pacman -S --noconfirm zram-generator
+if ask_user "Install Heroic Games Launcher from AUR?"; then
+  sudo -u "$TARGET_USER" yay -S --noconfirm --needed heroic-games-launcher-bin
 fi
 
-# Get total memory in MiB
-TOTAL_MEM=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo)
-ZRAM_SIZE=$((TOTAL_MEM / 2))
-
-# Create zram config
-mkdir -p /etc/systemd/zram-generator.conf.d
-
-cat > /etc/systemd/zram-generator.conf.d/00-zram.conf <<EOF
-[zram0]
-zram-size = ${ZRAM_SIZE}
-compression-algorithm = zstd
-EOF
-
-# Trigger zram generator
-systemctl daemon-reexec
-
-# Start zram swap
-if systemctl start systemd-zram-setup@zram0.service; then
-  echo "ZRAM swap started successfully with size ${ZRAM_SIZE}MiB."
-else
-  echo "Failed to start ZRAM swap. Check configuration and journal logs."
+# Prismlauncher
+if ask_user "Install Prism Launcher(mooded launcher for minecraft)?"; then
+  pacman -S --noconfirm --needed prismlauncher
 fi
 
+# Apply  optimizations
+if ask_user "Apply gaming optimizations and ZRAM setup?"; then
+  sudo -u "$TARGET_USER" yay -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
+  systemctl enable --now ananicy-cpp.service
 
-        break
-    elif [[ "$General_answer" == "n" || "$General_answer" == "N" ]]; then
-        echo "General Gaming Optimizations skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
+  echo -e 'vm.swappiness=100\nvm.vfs_cache_pressure=50\nvm.dirty_bytes=268435456\nvm.dirty_background_bytes=67108864\nvm.dirty_writeback_centisecs=1500\nkernel.nmi_watchdog=0\nkernel.unprivileged_userns_clone=1\nkernel.kptr_restrict=2\nnet.core.netdev_max_backlog=4096\nfs.file-max=2097152\nfs.xfs.xfssyncd_centisecs=10000' >> /etc/sysctl.conf
+  sysctl -p
 
-while true; do
-    echo "Install Nvidia drivers? (y/n)"
-    read -r driver_answer
+  pacman -S --noconfirm —-needed zram-generator
+  TOTAL_MEM=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo)
+  ZRAM_SIZE=$((TOTAL_MEM / 2))
+  mkdir -p /etc/systemd/zram-generator.conf.d
+  echo -e "[zram0]\nzram-size = ${ZRAM_SIZE}\ncompression-algorithm = zstd" > /etc/systemd/zram-generator.conf.d/00-zram.conf
+  systemctl daemon-reexec
+  systemctl start systemd-zram-setup@zram0.service
+fi
 
-    if [[ "$driver_answer" == "y" || "$driver_answer" == "Y" ]]; then
-        # Detect NVIDIA GPU
-        gpu_model=$(lspci | grep -i 'VGA\|3D' | grep -i nvidia)
+if ask_user "Install NVIDIA drivers(RTX2000+)?"; then
+ pacman -S --noconfirm --needed nvidia-open-dkms nvidia-utils nvidia-settings
 
-        if [[ -z "$gpu_model" ]]; then
-            echo "No NVIDIA GPU found. No driver will be installed."
-            exit 0
-        fi
+if ask_user "Install AMD drivers?"; then
+  pacman -S --noconfirm --needed mesa lib32-mesa mesa-vdpau lib32-mesa-vdpau lib32-vulkan-radeon vulkan-radeon glu lib32-glu vulkan-icd-loader lib32-vulkan-icd-loader
+fi
 
-        # Extract PCI device ID for identification of GPU model
-        pci_entry=$(lspci -n | grep -i 'VGA\|3D' | grep -i nvidia | head -n1 | awk '{print $3}')
-        device_id_hex=${pci_entry#*:}  # part after colon
+if ask_user "Install Wine and Winetricks?"; then
+  pacman -S --noconfirm --needed wine winetricks wine-mono
+fi
 
-        # Convert hex to decimal
-        device_id_dec=$((16#$device_id_hex))
+if ask_user "Install system monitoring tool (Mission Center)?"; then
+  pacman -S --noconfirm --needed mission-center
+fi
 
-        # Select driver
-        if (( device_id_dec >= 0x2500 )); then
-            driver="nvidia-open"
-        elif (( device_id_dec >= 0x1000 )); then
-            driver="nvidia"
-        elif (( device_id_dec >= 0x0C00 )); then
-            driver="nvidia-470xx"
-        elif (( device_id_dec >= 0x0600 )); then
-            driver="nvidia-390xx"
-        elif (( device_id_dec >= 0x0300 )); then
-            driver="nvidia-340xx"
-        else
-            driver="nouveau"
-        fi
+if ask_user "Install lact (GPU control)?"; then
+  pacman -S --noconfirm --needed lact
+fi
 
-        echo "Detected GPU: $gpu_model"
-        echo "Selected driver: $driver"
+if ask_user "Install protonplus from AUR?"; then
+  sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
+fi
 
-        check_driver_packages() {
-            local driver=$1
+if ask_user "Add Chaotic-AUR repository(Experimental only for experienced users)?"; then
+  pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+  pacman-key --lsign-key 3056513887B78AEB
+  pacman -U --noconfirm \
+    'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
+    'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+  echo -e '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
+  pacman -Syyuu --noconfirm
+fi
 
-            case "$driver" in
-                nvidia)
-                    pkgs=(nvidia nvidia-utils nvidia-settings)
-                    ;;
-                nvidia-open)
-                    pkgs=(nvidia-open nvidia-utils nvidia-settings)
-                    ;;
-                nvidia-470xx)
-                    pkgs=(nvidia-470xx nvidia-470xx-utils)
-                    ;;
-                nvidia-390xx)
-                    pkgs=(nvidia-390xx nvidia-390xx-utils)
-                    ;;
-                nvidia-340xx)
-                    pkgs=(nvidia-340xx nvidia-340xx-utils)
-                    ;;
-                nouveau)
-                    pkgs=(xf86-video-nouveau)
-                    ;;
-                *)
-                    echo "Unknown driver: $driver"
-                    return 1
-                    ;;
-            esac
+if ask_user "Install CachyOS repositories(Experimental only for experienced users)?"; then
+  curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
+  tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+  ./cachyos-repo.sh
+  pacman -Syyuu --noconfirm
+fi
 
-            local missing=0
-            for pkg in "${pkgs[@]}"; do
-                if ! pacman -Q "$pkg" &>/dev/null; then
-                    echo "Package $pkg is NOT installed."
-                    missing=1
-                else
-                    echo "Package $pkg is installed."
-                fi
-            done
-
-            if (( missing == 1 )); then
-                echo "Installing missing packages..."
-                pacman -S --needed "${pkgs[@]}"
-                if [[ $? -ne 0 ]]; then
-                    echo "Error installing packages. Aborting."
-                    exit 1
-                fi
-            else
-                echo "All required packages are already installed."
-            fi
-            return 0
-        }
-
-        # Check and install drivers
-        check_driver_packages "$driver"
-
-        echo "NVIDIA driver setup completed."
-        break
-
-    elif [[ "$driver_answer" == "n" || "$driver_answer" == "N" ]]; then
-        echo "NVIDIA driver installation skipped."
-        break
-    else
-        echo "Please answer y (yes) or n (no)."
-    fi
-done
-
-# Install amd drivers
-while true; do
-    echo "Install amd drivers? (y/n)"
-    read -r amd_answer
-
-    if [[ "$amd_answer" == "y" || "$amd_answer" == "Y" ]]; then
-    pacman -S --noconfirm --needed mesa lib32-mesa mesa-vdpau lib32-mesa-vdpau lib32-vulkan-radeon vulkan-radeon glu lib32-glu vulkan-icd-loader lib32-vulkan-icd-loader
-    echo "AMD drivers installed successfully."
-    break
-    elif [[ "$amd_answer" == "n" || "$amd_answer" == "N" ]]; then
-        echo "AMD river installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-# Install Wine and Winetricks
-while true; do
-    echo "Install Wine and Winetricks? (y/n)"
-    read -r wine_answer
-    if [[ "$wine_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm --needed wine winetricks wine-mono
-        echo "Wine and Winetricks installed succesfully."
-        break
-    elif [[ "$wine_answer" =~ ^[Nn]$ ]]; then
-        echo "wine installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-# Install system monitoring tools
-while true; do
-    echo "Install system monitoring tools (mission center)? (y/n)"
-    read -r monitoring_answer
-    if [[ "$monitoring_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm --needed mission-center
-        echo "System monitoring tools installed successfully."
-        break
-    elif [[ "$monitoring_answer" =~ ^[Nn]$ ]]; then
-        echo "Mission Center installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-
-# Install lact
-while true; do
-    echo "Install lact (manage and/or overclock your GPU)? (y/n)"
-    read -r lact_answer
-    if [[ "$lact_answer" =~ ^[Yy]$ ]]; then
-        pacman -S --noconfirm --needed lact
-        echo "lact installed successfully."
-        break
-    elif [[ "$lact_answer" =~ ^[Nn]$ ]]; then
-        echo "lact installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-
-# Install protonplus
-while true; do
-    echo "Install protonplus from AUR (manage compatibility tools like PROTON)? (y/n)"
-    read -r proton_answer
-    if [[ "$proton_answer" =~ ^[Yy]$ ]]; then
-        sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
-        echo "protonplus installed successfully."
-        break
-    elif [[ "$proton_answer" =~ ^[Nn]$ ]]; then
-        echo "proton installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-# Chaotic-AUR
-while true; do
-    echo "Would you like to add the Chaotic-AUR Repository for precompiled Aur packages (EXPERIMENTAL NOT RECOMMENDED FOR UNEXPERIENCED USERS)? (y/n)"
-    read -r chaotic_answer
-
-    if [[ "$chaotic_answer" == "y" || "$chaotic_answer" == "Y" ]]; then
-        echo "Downloading and installing chaotic-AUR..."
-        pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-        pacman-key --lsign-key 3056513887B78AEB
-        pacman -U --noconfirm \
-        'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
-        'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
-        echo -e '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' | sudo tee -a /etc/pacman.conf
-        pacman -Syyuu --noconfirm
-        break
-    elif [[ "$chaotic_answer" == "n" || "$chaotic_answer" == "N" ]]; then
-        echo "Chaotic-AUR installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-# Install cachyos repos
-while true; do
-    echo "Install cachyos repos for optimized packages (EXPERIMENTAL NOT RECOMMENDED FOR UNEXPERIENCED USERS)? (y/n)"
-    read -r cachy_answer
-    if [[ "$cachy_answer" =~ ^[Yy]$ ]]; then
-        curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
-        tar xvf cachyos-repo.tar.xz && cd cachyos-repo
-        sudo ./cachyos-repo.sh
-        echo "cachy repos installed successfully."
-        break
-    elif [[ "$cachy_answer" =~ ^[Nn]$ ]]; then
-        echo "cachy repos installation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
-
-
-# compile cachyos kernel
-while true; do
-    echo "compile cachyos kernel for lower latency and sometimes higher fps (this will take a long time if you dont have chaotic AUR or Cachy repos )? (y/n)"
-    read -r kernel_answer
-    if [[ "$kernel_answer" =~ ^[Yy]$ ]]; then
-    sudo -u "$TARGET_USER" yay -S --noconfirm --needed linux-cachyos linux-cachyos-headers
-
-        echo "Kernel installed successfully."
-        break
-    elif [[ "kernel_answer" =~ ^[Nn]$ ]]; then
-        echo "Kernel compilation skipped."
-        break
-    else
-        echo "Invalid input. Please enter 'y' or 'n'."
-    fi
-done
+if ask_user "Install CachyOS kernel(This will take a really long time if you dont have CachyOS or Chaotic-AUR repos)?"; then
+pacman -Syyuu --noconfirm
+  sudo -u "$TARGET_USER" yay -S --noconfirm --needed linux-cachyos linux-cachyos-headers
+fi
