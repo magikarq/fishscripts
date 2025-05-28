@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# Ask user yes/no questions
 ask_user() {
     local prompt="$1"
     local response
@@ -13,20 +14,25 @@ ask_user() {
     done
 }
 
-# Check for root
+# Root check
 if [[ "$EUID" -ne 0 ]]; then
-  echo "Please run this script as root or using sudo."
+  echo -e "\e[1;31mPlease run this script as root or using sudo.\e[0m"
   exit 1
 fi
 
+# Setup variables
 TARGET_USER=$(logname)
 HOME_DIR="/home/$TARGET_USER"
 SETUP_DIR="$HOME_DIR/Arch-setup"
+LOGFILE="$SETUP_DIR/setup.log"
 
 mkdir -p "$SETUP_DIR"
 chown "$TARGET_USER:$TARGET_USER" "$SETUP_DIR"
 
-# Display logo
+# Enable logging
+exec > >(tee -a "$LOGFILE") 2>&1
+
+# Logo
 cat << 'EOF'
 
                    -`
@@ -46,94 +52,145 @@ cat << 'EOF'
      /ossssssss/        +ssssooo/-
    `/ossssso+/:-        -:/+osssso+-
   `+sso+:-`                 `.-/+oso:
- `++:.                           `-/+/
+ `++:.                           `-/+
 
 EOF
 
-# Install base dependencies
-if ask_user "Install base dependencies  and enable multilib repo?"; then
+# Base dependencies
+if ask_user "Install base dependencies and enable multilib repo?"; then
+  echo -e "\e[1;34mInstalling base dependencies...\e[0m"
   pacman -Syu --noconfirm
-  if ! grep -Pzo '\[multilib\]\n(?:#.*\n)*#?Include = /etc/pacman.d/mirrorlist' /etc/pacman.conf | grep -qv '^Include'; then
-    sed -i '/^\[multilib\]$/,/^$/{s/^#\(Include = \/etc\/pacman\.d\/mirrorlist\)/\1/}' /etc/pacman.conf
+
+  if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
+    echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
     pacman -Sy
   fi
+
   pacman -S --needed --noconfirm reflector wget gnupg curl git base-devel
   cd /tmp
   sudo -u "$TARGET_USER" git clone https://aur.archlinux.org/yay.git
   cd yay
   sudo -u "$TARGET_USER" makepkg -si --noconfirm
 else
-  echo "Dependencies required. Exiting."
+  echo -e "\e[1;31mDependencies required. Exiting.\e[0m"
   exit 1
 fi
 
-# Set fastest mirrors
+# Mirrors
 if ask_user "Set fastest mirrors?"; then
-reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
-pacman -Syy
+  echo -e "\e[1;34mSetting fastest mirrors...\e[0m"
+  reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
+  pacman -Syy
 fi
 
-# Lutris installation
-if ask_user "Install Lutris?"; then
-  pacman -S --noconfirm --needed lutris
-fi
+# Game launchers
+[[ $(ask_user "Install Lutris?") ]] && pacman -S --noconfirm --needed lutris
+[[ $(ask_user "Install Steam?") ]] && pacman -S --noconfirm --needed steam
+[[ $(ask_user "Install Heroic Games Launcher from AUR?") ]] && sudo -u "$TARGET_USER" yay -S --noconfirm --needed heroic-games-launcher-bin
+[[ $(ask_user "Install Prism Launcher (Minecraft)?") ]] && pacman -S --noconfirm --needed prismlauncher
 
-# Steam installation
-if ask_user "Install Steam?"; then
-  pacman -S --noconfirm --needed steam
-fi
-
-# Heroic Games Launcher installation
-if ask_user "Install Heroic Games Launcher from AUR?"; then
-  sudo -u "$TARGET_USER" yay -S --noconfirm --needed heroic-games-launcher-bin
-fi
-
-# Prismlauncher
-if ask_user "Install Prism Launcher(mooded launcher for minecraft)?"; then
-  pacman -S --noconfirm --needed prismlauncher
-fi
-
-# Apply  optimizations
-if ask_user "Apply gaming optimizations and ZRAM setup?"; then
+# Gaming optimizations + ZRAM
+if ask_user "Apply general optimizations and setup ZRAM ?"; then
   sudo -u "$TARGET_USER" yay -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
   systemctl enable --now ananicy-cpp.service
 
-  echo -e 'vm.swappiness=100\nvm.vfs_cache_pressure=50\nvm.dirty_bytes=268435456\nvm.dirty_background_bytes=67108864\nvm.dirty_writeback_centisecs=1500\nkernel.nmi_watchdog=0\nkernel.unprivileged_userns_clone=1\nkernel.kptr_restrict=2\nnet.core.netdev_max_backlog=4096\nfs.file-max=2097152\nfs.xfs.xfssyncd_centisecs=10000' >> /etc/sysctl.conf
+echo -e "w! /sys/class/rtc/rtc0/max_user_freq - - - - 3072\nw! /proc/sys/dev/hpet/max-user-freq  - - - - 3072" | tee /etc/tmpfiles.d/custom-rtc.conf
+systemd-tmpfiles --create /etc/tmpfiles.d/custom-rtc.conf
+cat /sys/class/rtc/rtc0/max_user_freq
+cat /proc/sys/dev/hpet/max-user-freq
+
+echo -e "w! /sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none - - - - 409" | tee /etc/tmpfiles.d/custom-thp.conf
+systemd-tmpfiles --create /etc/tmpfiles.d/custom-thp.conf
+cat /sys/kernel/mm/transparent_hugepage/khugepaged/max_ptes_none
+
+echo -e "w! /sys/kernel/mm/transparent_hugepage/defrag - - - - defer+madvise" | tee /etc/tmpfiles.d/custom-thp-defrag.conf
+systemd-tmpfiles --create /etc/tmpfiles.d/custom-thp-defrag.conf
+cat /sys/kernel/mm/transparent_hugepage/defrag
+
+  cat <<EOF >> /etc/sysctl.conf
+vm.swappiness=100
+vm.vfs_cache_pressure=50
+vm.dirty_bytes=268435456
+vm.dirty_background_bytes=67108864
+vm.dirty_writeback_centisecs=1500
+kernel.nmi_watchdog=0
+kernel.unprivileged_userns_clone=1
+kernel.kptr_restrict=2
+net.core.netdev_max_backlog=4096
+fs.file-max=2097152
+fs.xfs.xfssyncd_centisecs=10000
+EOF
   sysctl -p
 
-  pacman -S --noconfirm —-needed zram-generator
+  pacman -S --noconfirm --needed zram-generator
   TOTAL_MEM=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo)
   ZRAM_SIZE=$((TOTAL_MEM / 2))
   mkdir -p /etc/systemd/zram-generator.conf.d
-  echo -e "[zram0]\nzram-size = ${ZRAM_SIZE}\ncompression-algorithm = zstd" > /etc/systemd/zram-generator.conf.d/00-zram.conf
+  echo -e "[zram0]\nzram-size = ${ZRAM_SIZE}M\ncompression-algorithm = zstd" > /etc/systemd/zram-generator.conf.d/00-zram.conf
   systemctl daemon-reexec
-  systemctl start systemd-zram-setup@zram0.service
+  systemctl enable --now systemd-zram-setup@zram0.service
+  echo -e "w! /sys/module/zswap/parameters/enabled - - - - N" | tee /etc/tmpfiles.d/custom-zswap.conf
+systemd-tmpfiles --create /etc/tmpfiles.d/custom-zswap.conf
+echo -e "\e[1;32mzswap disabled:\e[0m"
+cat /sys/module/zswap/parameters/enabled
 fi
 
-if ask_user "Install NVIDIA drivers(RTX2000+)?"; then
- pacman -S --noconfirm --needed nvidia-open-dkms nvidia-utils nvidia-settings
+# NVIDIA drivers
+if ask_user "Install NVIDIA drivers (RTX 2000+)?"; then
+  echo -e "\e[1;34mInstalling NVIDIA drivers...\e[0m"
+  pacman -S --noconfirm --needed nvidia-open-dkms nvidia-utils nvidia-settings lib32-nvidia-utils
 
+  # Kernel module parameters
+  cat <<EOM > /etc/modprobe.d/nvidia.conf
+options nvidia NVreg_UsePageAttributeTable=1 \\
+    NVreg_InitializeSystemMemoryAllocations=0 \\
+    NVreg_DynamicPowerManagement=0x02 \\
+    NVreg_RegistryDwords=RMIntrLockingMode=1
+options nvidia_drm modeset=1
+EOM
+
+  # Blacklist Nouveau
+  echo -e "blacklist nouveau\noptions nouveau modeset=0" > /etc/modprobe.d/blacklist-nouveau.conf
+
+  # Regenerate initramfs
+  mkinitcpio -P
+
+  # X11 config
+  mkdir -p /etc/X11/xorg.conf.d
+  cat <<EOM > /etc/X11/xorg.conf.d/20-nvidia.conf
+Section "Device"
+    Identifier "NVIDIA Card"
+    Driver "nvidia"
+EndSection
+EOM
+
+  # persistence mode
+  nvidia-smi -pm 1
+fi
+
+# AMD drivers
 if ask_user "Install AMD drivers?"; then
+  echo -e "\e[1;34mInstalling AMD drivers...\e[0m"
   pacman -S --noconfirm --needed mesa lib32-mesa mesa-vdpau lib32-mesa-vdpau lib32-vulkan-radeon vulkan-radeon glu lib32-glu vulkan-icd-loader lib32-vulkan-icd-loader
 fi
 
+# Wine
 if ask_user "Install Wine and Winetricks?"; then
+  echo -e "\e[1;34mInstalling Wine...\e[0m"
   pacman -S --noconfirm --needed wine winetricks wine-mono
 fi
 
-if ask_user "Install system monitoring tool (Mission Center)?"; then
-  pacman -S --noconfirm --needed mission-center
-fi
+# Mission Center
+[[ $(ask_user "Install system monitoring tool (Mission Center)?") ]] && pacman -S --noconfirm --needed mission-center
 
-if ask_user "Install lact (GPU control)?"; then
-  pacman -S --noconfirm --needed lact
-fi
+# lact
+[[ $(ask_user "Install lact (GPU control)?") ]] && pacman -S --noconfirm --needed lact
 
-if ask_user "Install protonplus from AUR?"; then
-  sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
-fi
+# protonplus
+[[ $(ask_user "Install protonplus from AUR?") ]] && sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
 
-if ask_user "Add Chaotic-AUR repository(Experimental only for experienced users)?"; then
+# Chaotic AUR
+if ask_user "Add Chaotic-AUR repository (experimental)?"; then
   pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
   pacman-key --lsign-key 3056513887B78AEB
   pacman -U --noconfirm \
@@ -143,14 +200,18 @@ if ask_user "Add Chaotic-AUR repository(Experimental only for experienced users)
   pacman -Syyuu --noconfirm
 fi
 
-if ask_user "Install CachyOS repositories(Experimental only for experienced users)?"; then
+# CachyOS repo
+if ask_user "Install CachyOS repositories (experimental)?"; then
   curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
   tar xvf cachyos-repo.tar.xz && cd cachyos-repo
   ./cachyos-repo.sh
   pacman -Syyuu --noconfirm
 fi
 
-if ask_user "Install CachyOS kernel(This will take a really long time if you dont have CachyOS or Chaotic-AUR repos)?"; then
-pacman -Syyuu --noconfirm
+# CachyOS kernel
+if ask_user "Install CachyOS kernel (can be slow if you dont have CachyOS and Chaotic-AUR repos)?"; then
+  pacman -Syyuu --noconfirm
   sudo -u "$TARGET_USER" yay -S --noconfirm --needed linux-cachyos linux-cachyos-headers
 fi
+
+echo -e "\e[1;32mAll Reboot your system to apply changes.\e[0m"
