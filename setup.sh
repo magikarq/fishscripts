@@ -140,7 +140,6 @@ if ask_user "Install NVIDIA drivers (RTX 2000+)?"; then
   echo -e "\e[1;34mInstalling NVIDIA drivers...\e[0m"
   pacman -S --noconfirm --needed nvidia-open-dkms nvidia-utils nvidia-settings lib32-nvidia-utils
 
-  # Kernel module parameters
   cat <<EOM > /etc/modprobe.d/nvidia.conf
 options nvidia NVreg_UsePageAttributeTable=1 \\
     NVreg_InitializeSystemMemoryAllocations=0 \\
@@ -149,13 +148,10 @@ options nvidia NVreg_UsePageAttributeTable=1 \\
 options nvidia_drm modeset=1
 EOM
 
-  # Blacklist Nouveau
   echo -e "blacklist nouveau\noptions nouveau modeset=0" > /etc/modprobe.d/blacklist-nouveau.conf
 
-  # Regenerate initramfs
   mkinitcpio -P
 
-  # X11 config
   mkdir -p /etc/X11/xorg.conf.d
   cat <<EOM > /etc/X11/xorg.conf.d/20-nvidia.conf
 Section "Device"
@@ -168,11 +164,12 @@ EOM
   nvidia-smi -pm 1
 fi
 
-# AMD drivers
-if ask_user "Install AMD drivers?"; then
-  echo -e "\e[1;34mInstalling AMD drivers...\e[0m"
-  pacman -S --noconfirm --needed mesa lib32-mesa mesa-vdpau lib32-mesa-vdpau lib32-vulkan-radeon vulkan-radeon glu lib32-glu vulkan-icd-loader lib32-vulkan-icd-loader
+# mesa-git
+if ask_user "compile mesa-git for newest feuture and compatibility (FSR4/RDNA4 etc.) drivers?"; then
+  echo -e "\e[1;34m Compiling mesa-git...\e[0m"
+  yay -S --noconfirm --needed mesa-git lib32-mesa-git
 fi
+
 
 # Wine
 if ask_user "Install Wine and Winetricks?"; then
