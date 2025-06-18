@@ -13,15 +13,12 @@ Scripts to quickly set up a Linux system optimized for gaming — including GPU 
 * 🎮 Steam, Lutris, Heroic Games Launcher setup
 * ⚙️ Performance optimizations (CPU governor, swappiness, etc.)
 * 🕹️ Gaming Dependencies (arch-gaming-meta)
-* ⚙️ General config and tools
 * 📦 Flatpak / Chaotic AUR
-* ⚙️ Cachyos patches and repos
-*  Linutil  for extra setup
-* Cachyos Kernel
+* 🇨Cachyos Kernel,Cachyos patches and Cachyos repo
 
 ---
 
-## 🚀 Getting Started
+## Installation
 
 **1. Clone the repository**
 
@@ -47,7 +44,7 @@ sudo ./setup.sh
 
 ## ⚠️ Disclaimer
 
-This project is intended for users comfortable with the Linux command line. Always read scripts before running them. Use at your own risk.
+This project is intended for users comfortable with the Linux command line. Always read scripts before running them. IM NOT RESPONSIBLE FOR YOUR SYSTEM BREAKING use at your own risk.
 
 ---
 
