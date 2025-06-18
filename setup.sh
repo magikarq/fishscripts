@@ -89,8 +89,8 @@ fi
 [[ $(ask_user "Install Heroic Games Launcher from AUR?") ]] && sudo -u "$TARGET_USER" yay -S --noconfirm --needed heroic-games-launcher-bin
 [[ $(ask_user "Install Prism Launcher (Minecraft)?") ]] && pacman -S --noconfirm --needed prismlauncher
 
-# Gaming optimizations + ZRAM
-if ask_user "Apply general optimizations and setup ZRAM ?"; then
+# Gaming optimizations 
+if ask_user "Apply general optimizations?"; then
   sudo -u "$TARGET_USER" yay -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
   systemctl enable --now ananicy-cpp.service
 
@@ -122,17 +122,6 @@ fs.xfs.xfssyncd_centisecs=10000
 EOF
   sysctl -p
 
-  pacman -S --noconfirm --needed zram-generator
-  TOTAL_MEM=$(awk '/MemTotal/ {print int($2 / 1024)}' /proc/meminfo)
-  ZRAM_SIZE=$((TOTAL_MEM / 2))
-  mkdir -p /etc/systemd/zram-generator.conf.d
-  echo -e "[zram0]\nzram-size = ${ZRAM_SIZE}M\ncompression-algorithm = zstd" > /etc/systemd/zram-generator.conf.d/00-zram.conf
-  systemctl daemon-reexec
-  systemctl enable --now systemd-zram-setup@zram0.service
-  echo -e "w! /sys/module/zswap/parameters/enabled - - - - N" | tee /etc/tmpfiles.d/custom-zswap.conf
-systemd-tmpfiles --create /etc/tmpfiles.d/custom-zswap.conf
-echo -e "\e[1;32mzswap disabled:\e[0m"
-cat /sys/module/zswap/parameters/enabled
 fi
 
 # NVIDIA drivers
@@ -160,7 +149,6 @@ Section "Device"
 EndSection
 EOM
 
-  # persistence mode
   nvidia-smi -pm 1
 fi
 
@@ -170,6 +158,27 @@ if ask_user "compile mesa-git for newest feuture and compatibility (FSR4/RDNA4 e
   yay -S --noconfirm --needed mesa-git lib32-mesa-git
 fi
 
+# OpenRGB
+if ask_user "Install OpenRGB-git from AUR and setup SMBUS acess for RGB control?"; then
+  echo -e "\e[1;34mInstalling OpenRGB...\e[0m"
+  yay -S --noconfirm --needed openrgb-git
+
+  echo -e "\e[1;34mConfiguring SMBus access for OpenRGB...\e[0m"
+  # Kernel parameter for ACPI/SMBus conflict
+  if ! grep -q 'acpi_enforce_resources=lax' /etc/default/grub; then
+    sed -i 's/^GRUB_CMDLINE_LINUX="/&acpi_enforce_resources=lax /' /etc/default/grub
+    grub-mkconfig -o /boot/grub/grub.cfg
+  fi
+  cat >/etc/modules-load.d/openrgb-i2c.conf <<EOF
+i2c-dev
+i2c-piix4
+EOF
+  groupadd -f i2c
+  usermod -aG i2c "$TARGET_USER"
+  modprobe i2c-dev i2c-piix4
+  udevadm control --reload
+  udevadm trigger
+fi
 
 # Wine
 if ask_user "Install Wine and Winetricks?"; then
