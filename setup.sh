@@ -76,7 +76,11 @@ else
   exit 1
 fi
 
-# Mirrors
+# Mirrors# mesa-git
+if ask_user "compile mesa-git for newest feuture and compatibility (FSR4/RDNA4 etc.) drivers?"; then
+  echo -e "\e[1;34m Compiling mesa-git...\e[0m"
+  yay -S --noconfirm --needed mesa-git lib32-mesa-git
+fi
 if ask_user "Set fastest mirrors?"; then
   echo -e "\e[1;34mSetting fastest mirrors...\e[0m"
   reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
@@ -152,14 +156,8 @@ EOM
   nvidia-smi -pm 1
 fi
 
-# mesa-git
-if ask_user "compile mesa-git for newest feuture and compatibility (FSR4/RDNA4 etc.) drivers?"; then
-  echo -e "\e[1;34m Compiling mesa-git...\e[0m"
-  yay -S --noconfirm --needed mesa-git lib32-mesa-git
-fi
-
 # OpenRGB
-if ask_user "Install OpenRGB-git from AUR and setup SMBUS acess for RGB control?"; then
+if ask_user "Install OpenRGB-git from AUR and setup SMBUS access for RGB control (Onlyworks with Grub bootloader) ?"; then
   echo -e "\e[1;34mInstalling OpenRGB...\e[0m"
   yay -S --noconfirm --needed openrgb-git
 
@@ -187,13 +185,19 @@ if ask_user "Install Wine and Winetricks?"; then
 fi
 
 # Mission Center
-[[ $(ask_user "Install system monitoring tool (Mission Center)?") ]] && pacman -S --noconfirm --needed mission-center
+if ask_user "Install a system monitoring tool like taskmanager (Mission Center)"; then
+  pacman -S  --noconfirm --needed mission-center
+fi
 
 # lact
-[[ $(ask_user "Install lact (GPU control)?") ]] && pacman -S --noconfirm --needed lact
+if ask_user "Install a GPU management app like afterburner (lact)"; then
+  pacman -S  --noconfirm --needed lact
+fi
 
 # protonplus
-[[ $(ask_user "Install protonplus from AUR?") ]] && sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
+if ask_user "Install a App to manage custom Proton versions from the AUR (protonplus)"; then
+  sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
+fi
 
 # Chaotic AUR
 if ask_user "Add Chaotic-AUR repository (experimental)?"; then
@@ -214,10 +218,19 @@ if ask_user "Install CachyOS repositories (experimental)?"; then
   pacman -Syyuu --noconfirm
 fi
 
+# mesa-git
+if ask_user "compile mesa-git for newest feuture and compatibility (FSR4/RDNA4 etc.) drivers?(can be slow if you dont have the cachyos repo)"; then
+  echo -e "\e[1;34m Compiling mesa-git...\e[0m"
+  sudo -u "$TARGET_USER" yay -S --noconfirm --needed mesa-git lib32-mesa-git
+fi
+
 # CachyOS kernel
-if ask_user "Install CachyOS kernel (can be slow if you dont have CachyOS and Chaotic-AUR repos)?"; then
+if ask_user "Install CachyOS kernel (can be slow if you dont have CachyOS or Chaotic-AUR repos)?"; then
   pacman -Syyuu --noconfirm
   sudo -u "$TARGET_USER" yay -S --noconfirm --needed linux-cachyos linux-cachyos-headers
 fi
 
-echo -e "\e[1;32mAll Reboot your system to apply changes.\e[0m"
+# Reboot
+if ask_user "Do you want to reboot to apply changes?"; then
+reboot
+fi
