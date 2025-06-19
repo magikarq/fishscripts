@@ -76,22 +76,30 @@ else
   exit 1
 fi
 
-# Mirrors# mesa-git
-if ask_user "compile mesa-git for newest feuture and compatibility (FSR4/RDNA4 etc.) drivers?"; then
-  echo -e "\e[1;34m Compiling mesa-git...\e[0m"
-  yay -S --noconfirm --needed mesa-git lib32-mesa-git
-fi
+# Mirrors
 if ask_user "Set fastest mirrors?"; then
   echo -e "\e[1;34mSetting fastest mirrors...\e[0m"
   reflector --latest 10 --sort rate --save /etc/pacman.d/mirrorlist
   pacman -Syy
 fi
 
-# Game launchers
-[[ $(ask_user "Install Lutris?") ]] && pacman -S --noconfirm --needed lutris
-[[ $(ask_user "Install Steam?") ]] && pacman -S --noconfirm --needed steam
-[[ $(ask_user "Install Heroic Games Launcher from AUR?") ]] && sudo -u "$TARGET_USER" yay -S --noconfirm --needed heroic-games-launcher-bin
-[[ $(ask_user "Install Prism Launcher (Minecraft)?") ]] && pacman -S --noconfirm --needed prismlauncher
+# CachyOS repo
+if ask_user "Install CachyOS repositories (precopiled and natively compiled packages) (EXPERIMENTAL)?"; then
+  curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
+  tar xvf cachyos-repo.tar.xz && cd cachyos-repo
+  ./cachyos-repo.sh
+  pacman -Syyuu --noconfirm
+fi
+
+# Steam
+if ask_user "Install steam?"; then
+  pacman -S --noconfirm --needed steam
+fi
+
+# Heroic
+if ask_user "Install Heroic Games launcher (Epic Games/GOG Access?)"; then
+  sudo -u "$TARGET_USER" yay -S --noconfirm --needed heroic-games-launcher-bin
+fi
 
 # Gaming optimizations 
 if ask_user "Apply general optimizations?"; then
@@ -122,7 +130,6 @@ kernel.unprivileged_userns_clone=1
 kernel.kptr_restrict=2
 net.core.netdev_max_backlog=4096
 fs.file-max=2097152
-fs.xfs.xfssyncd_centisecs=10000
 EOF
   sysctl -p
 
@@ -184,11 +191,6 @@ if ask_user "Install Wine and Winetricks?"; then
   pacman -S --noconfirm --needed wine winetricks wine-mono
 fi
 
-# Mission Center
-if ask_user "Install a system monitoring tool like taskmanager (Mission Center)"; then
-  pacman -S  --noconfirm --needed mission-center
-fi
-
 # lact
 if ask_user "Install a GPU management app like afterburner (lact)"; then
   pacman -S  --noconfirm --needed lact
@@ -197,25 +199,6 @@ fi
 # protonplus
 if ask_user "Install a App to manage custom Proton versions from the AUR (protonplus)"; then
   sudo -u "$TARGET_USER" yay -S --noconfirm --needed protonplus
-fi
-
-# Chaotic AUR
-if ask_user "Add Chaotic-AUR repository (experimental)?"; then
-  pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-  pacman-key --lsign-key 3056513887B78AEB
-  pacman -U --noconfirm \
-    'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' \
-    'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
-  echo -e '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist' >> /etc/pacman.conf
-  pacman -Syyuu --noconfirm
-fi
-
-# CachyOS repo
-if ask_user "Install CachyOS repositories (experimental)?"; then
-  curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
-  tar xvf cachyos-repo.tar.xz && cd cachyos-repo
-  ./cachyos-repo.sh
-  pacman -Syyuu --noconfirm
 fi
 
 # mesa-git
