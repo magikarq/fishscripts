@@ -30,7 +30,7 @@ cd linuxfish
 
 ```bash
 chmod +x setup.sh
-sudo ./setup.sh
+./setup.sh
 ```
 
 ---
