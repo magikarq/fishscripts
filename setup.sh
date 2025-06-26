@@ -148,6 +148,7 @@ fi
 
 # OpenRGB
 if ask_user "Install OpenRGB-git from AUR and setup SMBUS access for RGB control?"; then
+  sudo pacman -S --noconfirm --needed i2c-tools
   paru -S --noconfirm --needed openrgb-git
   cat <<EOF | sudo tee /etc/modules-load.d/openrgb-i2c.conf
 i2c-dev
