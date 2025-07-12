@@ -10,7 +10,7 @@ Scripts to quickly set up a Linux system optimized for gaming — including GPU 
 ## 🧰 Features
 
 * 🖥️ GPU driver installation
-* 🎮 Steam, Lutris, Heroic Games Launcher setup
+* 🎮 Gaming Launcher setup (Steam etc.)
 * ⚙️ Performance optimizations
 * 🕹️ Gaming Dependencies
 * 🇨Cachyos Kernel,Cachyos settings patches and Cachyos repo
