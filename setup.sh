@@ -86,7 +86,7 @@ if ask_user "Install Heroic Games launcher (Epic Games/GOG Access?)"; then
 fi
 
 # System optimizations
-if ask_user "Apply general optimizations?"; then
+if ask_user "Apply general optimizationsand install gaming apps and launchers?"; then
   paru -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
   sudo systemctl enable --now ananicy-cpp.service
 
