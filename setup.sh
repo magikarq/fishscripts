@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-# Ask user yes/no questions
+# sudo/root check
+if [ "$EUID" -eq 0 ]; then
+  echo "This script cant be run as root or with sudo. Exiting..."
+  exit 1
+fi
+
+# Ask yes/no questions
 ask_user() {
     local prompt="$1"
     local response
@@ -29,24 +35,21 @@ exec > >(sudo tee -a "$LOGFILE") 2>&1
 # Logo
 cat << 'EOF'
 
-                   -`
-                  .o+`
-                 `ooo/
-                `+oooo:
-               `+oooooo:
-               -+oooooo+:
-             `/:-:++oooo+:
-            `/++++/+++++++:
-           `/++++++++++++++:
-          `/+++ooooooooooooo/`
-         ./ooosssso++osssssso+`
-        .oossssso-````/ossssss+`
-       -osssssso.      :ssssssso.
-      :osssssss/        osssso+++.
-     /ossssssss/        +ssssooo/-
-   `/ossssso+/:-        -:/+osssso+-
-  `+sso+:-`                 `.-/+oso:
- `++:.                           `-/+
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠆⣃⠀⠀⢀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⢂⠑⣤⠁⢰⣤⠂⠒⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠘⡀⠀⠀⠀⠀⠀⠀⡎⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⢤
+⠀⠀⠀⠀⠀⡠⢼⠋⢫⣻⣉⠈⠉⠉⠉⠙⠫⢭⣒⣠⣀⠀⠀⠀⠀⠀⠀⠀⡠⣺⠶⠉⢘⠀⠀
+⠀⠀⠀⣴⠋⠈⠀⠀⠀⣷⠞⡂⠀⢀⣠⣴⠶⢶⠫⠯⠛⠿⣦⣀⠀⠀⡴⡇⠊⠁⠀⠀⢸⠀⠀
+⠠⣤⡭⠀⠀⢰⢋⢱⠀⠀⡹⢀⡾⠃⢀⣠⠴⠾⡆⠨⠀⠀⠈⢷⣽⡮⣆⠂⢀⡠⠔⠒⡺⠀⠀
+⠀⢹⣿⡂⠀⠘⠒⠚⠀⠀⢸⣹⡓⡋⠁⠀⢀⣀⣸⡿⠄⠀⠀⠀⣿⣏⣧⠞⠉⠀⠀⢀⠏⠀⠀
+⠀⠀⡿⣟⠀⠀⠉⢻⣆⠀⠀⣯⠍⠉⠉⠉⠉⠁⠀⠀⠀⠇⠀⢀⣷⢻⠧⡀⠀⠀⠀⢸⠁⠀⠀
+⠀⢸⠿⣷⢖⡄⠀⠀⢻⡇⠈⣏⣙⠆⠀⠀⠀⠀⠀⠀⠀⢇⣴⠟⠅⣾⣅⠙⠒⠦⠤⡇⠀⠀⠀
+⠀⠀⠀⣻⡀⠈⠑⠦⣔⡇⢀⡓⡖⠃⠀⠀⠀⣀⣀⡶⡇⠁⠀⠀⠀⠈⣷⡀⠀⠀⠀⠸⡄⠀⠀
+⠀⠀⠀⠀⠉⢃⠀⠀⠀⢹⠛⠋⠉⠉⢏⠉⠉⡉⠲⣤⣙⣦⡀⠀⠀⠀⠠⢳⣄⡀⠀⢸⠀⠀⠀
+⠀⠀⠀⠀⠀⠈⣣⠀⠀⠘⣆⠀⠀⠀⠀⠙⡂⢻⠓⢄⡸⠁⠀⠀⠀⠀⠀⠀⠀⠈⠧⡴⠃⠀⠀
+⠀⠀⠀⠀⠀⢀⣷⠀⠀⠀⠈⠷⠄⠀⠀⠀⠘⠏⠀⠈⠙⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠈⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 
 EOF
 
@@ -60,12 +63,14 @@ if ask_user "Install base dependencies and enable multilib repo?"; then
   fi
 
   sudo pacman -S --needed --noconfirm reflector wget gnupg curl git base-devel
-  cd /tmp
-  git clone https://aur.archlinux.org/paru-bin.git
-  cd paru-bin
-  makepkg -si --noconfirm
+  if ! command -v paru &> /dev/null; then
+    cd /tmp
+    git clone https://aur.archlinux.org/paru-bin.git
+    cd paru-bin
+    makepkg -si --noconfirm
+  fi
 else
-  echo -e "\e[1;31mDependencies required. Exiting.\e[0m"
+  echo -e "\e[1;31mDependencies required. Exiting...\e[0m"
   exit 1
 fi
 
@@ -86,7 +91,7 @@ if ask_user "Install Heroic Games launcher (Epic Games/GOG Access?)"; then
 fi
 
 # System optimizations
-if ask_user "Apply general optimizationsand install gaming apps and launchers?"; then
+if ask_user "Apply general optimizations and install gaming apps and launchers?"; then
   paru -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
   sudo systemctl enable --now ananicy-cpp.service
 
@@ -162,7 +167,7 @@ EOF
 fi
 
 # lact
-if ask_user "Install a GPU management app like afterburner (lact)"; then
+if ask_user "Install a GPU management/overclocking app like afterburner (lact)"; then
   sudo pacman -S --noconfirm --needed lact
 fi
 
@@ -186,7 +191,7 @@ if ask_user "Compile mesa-git for newest feuture and compatibility (FSR4/RDNA4 e
 fi
 
 # CachyOS kernel
-if ask_user "Compile CachyOS kernel (can be slow if you dont have CachyOS or Chaotic-AUR repos)?"; then
+if ask_user "Compile CachyOS kernel (can be slow if you dont have CachyOS repo)?"; then
   sudo pacman -Syyuu --noconfirm
   paru -S --noconfirm --needed linux-cachyos linux-cachyos-headers
 fi
