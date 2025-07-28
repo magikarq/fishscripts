@@ -1,23 +1,23 @@
 
 ---
 
-# 🎮 Linux Gaming Setup Script
+# Linux Gaming Setup Script
 
 Scripts to quickly set up a Linux system optimized for gaming — including GPU drivers, performance tweaks, game launchers, and more.
 
 ---
 
-## 🧰 Features
+## Features
 
-* 🖥️ GPU driver installation
-* 🎮 Gaming Launcher setup (Steam etc.)
-* ⚙️ Performance optimizations
-* 🕹️ Gaming Dependencies
-* 🇨Cachyos Kernel,Cachyos settings patches and Cachyos repo
+* GPU driver installation
+* Gaming Launcher setup (Steam etc.)
+* Performance optimizations
+* Gaming Dependencies
+* Cachyos Kernel,Cachyos settings patches and Cachyos repo
 
 ---
 
-## ⤵️ Installation
+## Installation
 
 **1. Clone the repository**
 
@@ -35,25 +35,25 @@ chmod +x setup.sh
 
 ---
 
-## 🐧 Supported Distros
+## Supported Distros
 
 * Arch (derivatives could work too)
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
-This project is intended for users comfortable with the Linux command line. Always read scripts before running them. IM NOT RESPONSIBLE FOR YOUR SYSTEM BREAKING use at your own risk.
+IM NOT RESPONSIBLE FOR YOUR SYSTEM BREAKING use at your own risk.
 
 ---
 
-## 📜 License
+## License
 
 GPL License. See [LICENSE](./LICENSE) for details.
 
 ---
 
-## 🙌 Contributing
+## Contributing
 
 PRs are welcome! If you have tweaks, additions, or support for more distros — feel free to open a pull request.
 
