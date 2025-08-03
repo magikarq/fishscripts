@@ -37,7 +37,8 @@ chmod +x setup.sh
 
 ## Supported Distros
 
-* Arch (derivatives could work too)
+* Arch and most derivatives
+* Ubuntu (missing some features for now)
 
 ---
 
