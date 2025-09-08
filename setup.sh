@@ -85,7 +85,7 @@ if [[ "$DISTRO" == "arch" ]]; then
         sudo pacman -Sy
       fi
 
-      sudo pacman -S --needed --noconfirm reflector wget gnupg curl git base-devel
+      sudo pacman -S --needed --noconfirm reflector wget gnupg curl git base-devel flatpak
       if ! command -v paru &> /dev/null; then
         cd /tmp
         git clone https://aur.archlinux.org/paru-bin.git
@@ -109,13 +109,13 @@ if [[ "$DISTRO" == "arch" ]]; then
     fi
 
     # Heroic
-    if ask_user "Install Heroic Games launcher (Epic Games/GOG Access?)"; then
+    if ask_user "Install Heroic Games launcher from AUR (Epic Games/GOG Access?)"; then
       paru -S --noconfirm --needed heroic-games-launcher-bin
     fi
 
     # System optimizations
     if ask_user "Apply general optimizations and install gaming apps and launchers?"; then
-      paru -S --noconfirm --needed arch-gaming-meta cachyos-ananicy-rules
+      paru -S --noconfirm --needed cachyos-ananicy-rules
       sudo systemctl enable --now ananicy-cpp.service
 
       echo -e "w! /sys/class/rtc/rtc0/max_user_freq - - - - 3072\nw! /proc/sys/dev/hpet/max-user-freq  - - - - 3072" | sudo tee /etc/tmpfiles.d/custom-rtc.conf
@@ -174,9 +174,19 @@ EOM
       sudo nvidia-smi -pm 1
     fi
 
+    # pamac
+    if ask_user "Install a appstore (pamac-aur)?"; then
+      paru -S --noconfirm --needed pamac-aur
+    fi
+
     # OpenRGB
-    if ask_user "Install OpenRGB-git from AUR?"; then
-      paru -S --noconfirm --needed openrgb-git
+    if ask_user "Install an RGB control app (OpenRGB)?"; then
+      flatpak install -y flathub org.openrgb.OpenRGB
+    fi
+
+     # mangojuice
+    if ask_user "Install a peformance monitoring overlay like RivaTunerStatistics (mangojuice)"; then
+      flatpak install -y flathub com.mango_juice.MangoJuice
     fi
 
     # lact
@@ -185,12 +195,12 @@ EOM
     fi
 
     # protonplus
-    if ask_user "Install a App to manage custom Proton versions from the AUR (protonplus)"; then
-      paru -S --noconfirm --needed protonplus
+    if ask_user "Install a App to manage custom Proton versions like Proton-GE (protonplus)"; then
+      flatpak install -y flathub com.vysp3r.ProtonPlus
     fi
 
     # CachyOS repo
-    if ask_user "Install CachyOS repositories (precopiled and natively compiled packages) (EXPERIMENTAL)?"; then
+    if ask_user "Install CachyOS repositories (precopiled and natively compiled packages)?"; then
       curl -O https://mirror.cachyos.org/cachyos-repo.tar.xz
       tar xvf cachyos-repo.tar.xz && cd cachyos-repo
       sudo ./cachyos-repo.sh
@@ -230,18 +240,17 @@ elif [[ "$DISTRO" == "ubuntu" ]]; then
     if ask_user "Install Steam?"; then
       TMP_DEB="/tmp/steam_latest.deb"
       echo "Downloading latest Steam .deb package..."
-      wget -O "$TMP_DEB" "https://cdn.akamai.steamstatic.com/client/installer/steam.deb"
-      echo "Installing Steam .deb package..."
+      wget -O "$TMP_DEB" "https://cdn.fastly.steamstatic.com/client/installer/steam.deb"
       sudo dpkg -i "$TMP_DEB" || sudo apt-get install -f -y
       rm -f "$TMP_DEB"
     fi
 
-    # Heroic Games Launcher (via Flatpak)
+    # Heroic Games Launcher
     if ask_user "Install Heroic Games Launcher (Epic/GOG) via Flatpak?"; then
       flatpak install -y flathub com.heroicgameslauncher.hgl
     fi
 
-    # System optimizations (only Ubuntu-compatible)
+    # System optimizations
     if ask_user "Apply general optimizations (sysctl, swappiness, etc.)?"; then
       cat <<EOF | sudo tee -a /etc/sysctl.conf
 vm.swappiness=10
@@ -259,8 +268,13 @@ EOF
     fi
 
     # OpenRGB (via Flatpak)
-    if ask_user "Install OpenRGB (RGB control) via Flatpak?"; then
+    if ask_user "Install an RGB control app (OpenRGB)?"; then
       flatpak install -y flathub org.openrgb.OpenRGB
+    fi
+
+    # mangojuice
+    if ask_user "Install a peformance monitoring overlay like RivaTunerStatistics (mangojuice)?"; then
+      flatpak install -y flathub com.mango_juice.MangoJuice
     fi
 
     # lact
@@ -277,18 +291,18 @@ EOF
       sudo apt install -y software-properties-common
       sudo add-apt-repository ppa:damentz/liquorix -y
       sudo apt update
-      sudo apt install -y linux-image-liquorix-amd64 linux-headers-liquorix-amd6
+      sudo apt install -y linux-image-liquorix-amd64 linux-headers-liquorix-amd64
       sudo sed -i 's/GRUB_DEFAULT=0/GRUB_DEFAULT="Advanced options for Ubuntu>Ubuntu, with Linux liquorix-amd64"/' /etc/default/grub
       sudo update-grub
     fi
 
 else
     echo "Unsupported distribution: $DISTRO"
-    echo "This script supports Arch and Ubuntu. Exiting..."
+    echo "This script only supports Arch and Ubuntu. Exiting..."
     exit 1
 fi
 
 # Reboot
 if ask_user "Do you want to reboot to apply changes?"; then
-  sudo reboot
+reboot
 fi
