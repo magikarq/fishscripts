@@ -23,7 +23,7 @@ Scripts to quickly set up a Linux system optimized for gaming — including GPU 
 
 ```bash
 git clone https://github.com/magikarq/fishscripts.git
-cd fishscript
+cd fishscripts
 ```
 
 **2. Run the main setup script**
