@@ -114,7 +114,7 @@ if [[ "$DISTRO" == "arch" ]]; then
     fi
 
     # System optimizations
-    if ask_user "Apply general optimizations and install gaming apps and launchers?"; then
+    if ask_user "Apply general optimizations ?"; then
       paru -S --noconfirm --needed cachyos-ananicy-rules
       sudo systemctl enable --now ananicy-cpp.service
 
