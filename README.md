@@ -11,9 +11,8 @@
 
 * GPU driver installation
 * Gaming Launcher setup (Steam etc.)
-* Performance optimizations
+* Performance optimizations (cachyos tweaks,custom Kernel and optimized repos)
 * Gaming Dependencies
-* Cachyos Kernel,Cachyos settings patches and Cachyos repo
 
 ---
 
