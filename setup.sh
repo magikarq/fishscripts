@@ -150,7 +150,6 @@ EOF
 
     # NVIDIA drivers
     if ask_user "Install NVIDIA drivers (RTX 2000+)?"; then
-      echo -e "\e[1;34mInstalling NVIDIA drivers...\e[0m"
       sudo pacman -S --noconfirm --needed nvidia-open-dkms nvidia-utils nvidia-settings lib32-nvidia-utils
 
       cat <<EOM | sudo tee /etc/modprobe.d/nvidia.conf
