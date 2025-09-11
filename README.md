@@ -21,8 +21,8 @@
 **1. Clone the repository**
 
 ```bash
-git clone https://github.com/magikarq/fishscripts.git
-cd fishscripts
+git clone https://github.com/magikarq/fishscript.git
+cd fishscript
 ```
 
 **2. Run the main setup script**
