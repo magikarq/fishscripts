@@ -303,7 +303,7 @@ sudo apt update
     fi
 
     # Liquorix kernel
-    if ask_user "Install Liquorix kernel for better performance and responsiveness ?"; then
+    if ask_user "Install Liquorix kernel for better performance and responsiveness (Will break secure boot)?"; then
       sudo apt install -y software-properties-common
       sudo add-apt-repository ppa:damentz/liquorix -y
       sudo apt update
