@@ -114,7 +114,9 @@ if [[ "$DISTRO" == "arch" ]]; then
     fi
 
     # System optimizations
-    if ask_user "Apply general optimizations ?"; then
+    if ask_user "Apply general optimizations and setup gamemode?"; then
+      sudo pacman -S --noconfirm --needed gamemode
+      systemctl --user enable gamemoded.service
       paru -S --noconfirm --needed cachyos-ananicy-rules
       sudo systemctl enable --now ananicy-cpp.service
 
@@ -207,12 +209,6 @@ EOM
       sudo pacman -Syyuu --noconfirm
     fi
 
-    # mesa-git
-    if ask_user "Compile mesa-git for newest feuture and compatibility (FSR4/RDNA4 etc.) drivers?(can be slow if you dont have the cachyos repo)"; then
-      echo -e "\e[1;34m Compiling mesa-git...\e[0m"
-      paru -S --noconfirm --needed mesa-git lib32-mesa-git
-    fi
-
     # CachyOS kernel
     if ask_user "Compile/install CachyOS kernel (can be slow if you dont have CachyOS repo)?"; then
       sudo pacman -Syyuu --noconfirm
@@ -251,8 +247,11 @@ elif [[ "$DISTRO" == "ubuntu" ]]; then
     fi
 
     # System optimizations
-    if ask_user "Apply general optimizations (sysctl, swappiness, etc.)?"; then
-      cat <<EOF | sudo tee -a /etc/sysctl.conf
+    if ask_user "Apply general optimizations and install gamemode?"; then
+      sudo apt install -y gamemode
+      systemctl --user enable gamemoded.service
+
+            cat <<EOF | sudo tee -a /etc/sysctl.conf
 vm.swappiness=10
 vm.vfs_cache_pressure=50
 vm.dirty_bytes=268435456
@@ -267,6 +266,16 @@ EOF
       sudo sysctl -p
     fi
 
+    # NVIDIA drivers
+    if ask_user "Install newest NVIDIA drivers ?"; then
+    sudo apt install pkg-config libglvnd-dev dkms build-essential libegl-dev libegl1 libgl-dev libgl1 libgles-dev libgles1 libglvnd-core-dev libglx-dev libopengl-dev gcc make -y
+    sudo apt remove --purge '^nvidia-.*'
+    sudo apt autoremove -y
+      sudo add-apt-repository -y ppa:graphics-drivers/ppa
+      ubuntu-drivers devices
+      sudo ubuntu-drivers autoinstall
+sudo apt update
+
     # OpenRGB (via Flatpak)
     if ask_user "Install an RGB control app (OpenRGB)?"; then
       flatpak install -y flathub org.openrgb.OpenRGB
@@ -274,7 +283,7 @@ EOF
 
     # mangojuice
     if ask_user "Install a peformance monitoring overlay like RivaTunerStatistics (mangojuice)?"; then
-      flatpak install -y flathub com.mango_juice.MangoJuice
+      flatpak install flathub io.github.radiolamp.mangojuice
     fi
 
     # lact
@@ -286,8 +295,15 @@ EOF
         flatpak install -y flathub com.vysp3r.ProtonPlus
     fi
 
-    # Liquorix kernel (Cachyos Kernel is not working on Ubuntu)
-    if ask_user "Install Liquorix kernel (gaming-optimized kernel for Ubuntu)?"; then
+    # Updated mesa
+    if ask_user "Install updated mesa (AMD Drivers) ?"; then
+       sudo add-apt-repository ppa:kisak/kisak-mesa
+       sudo apt update
+       sudo apt upgrade      
+    fi
+
+    # Liquorix kernel
+    if ask_user "Install Liquorix kernel for better performance and responsiveness ?"; then
       sudo apt install -y software-properties-common
       sudo add-apt-repository ppa:damentz/liquorix -y
       sudo apt update
