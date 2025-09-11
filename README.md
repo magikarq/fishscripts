@@ -45,17 +45,4 @@ chmod +x setup.sh
 
 IM NOT RESPONSIBLE FOR YOUR SYSTEM BREAKING use at your own risk.
 
----
-
-## License
-
-GPL License. See [LICENSE](./LICENSE) for details.
-
----
-
-## Contributing
-
-PRs are welcome! If you have tweaks, additions, or support for more distros — feel free to open a pull request.
-
----
 
